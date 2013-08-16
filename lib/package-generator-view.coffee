@@ -25,7 +25,7 @@ class PackageGeneratorView extends View
     @previouslyFocusedElement = $(':focus')
     @message.text("Enter package path")
     placeholderName = "package-name"
-    @miniEditor.setText(path.join(config.userPackagesDirPath, placeholderName))
+    @miniEditor.setText(path.join(_.last(config.userPackageDirPaths), placeholderName))
     pathLength = @miniEditor.getText().length
     @miniEditor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
 
