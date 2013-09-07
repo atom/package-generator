@@ -104,4 +104,4 @@ describe 'Package Generator', ->
       packageGeneratorView.miniEditor.setText(packagePath)
       packageGeneratorView.trigger "core:confirm"
 
-      expect(atom.open).toHaveBeenCalledWith(packagePath)
+      expect(atom.open).toHaveBeenCalledWith(pathsToOpen: [packagePath])
