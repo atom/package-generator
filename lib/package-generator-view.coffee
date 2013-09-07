@@ -40,7 +40,7 @@ class PackageGeneratorView extends View
   confirm: ->
     if @validPackagePath()
       @createPackageFiles()
-      atom.open(@getPackagePath())
+      atom.open(pathsToOpen: [@getPackagePath()])
       @detach()
 
   getPackagePath: ->
