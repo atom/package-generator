@@ -62,7 +62,7 @@ describe 'Package Generator', ->
 
       expect(apmExecute).toHaveBeenCalled()
       expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
-      expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', "-p #{packagePath}"]
+      expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '-p', "#{packagePath}"]
 
     it "displays an error when the package path already exists", ->
       rootView.attachToDom()
