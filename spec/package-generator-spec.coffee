@@ -1,5 +1,4 @@
-RootView = require 'root-view'
-fsUtils = require 'fs-utils'
+{fs, RootView} = require 'atom-api'
 path = require 'path'
 
 describe 'Package Generator', ->
@@ -36,10 +35,10 @@ describe 'Package Generator', ->
 
       packageName = "sweet-package-dude"
       packagePath = "/tmp/atom-packages/#{packageName}"
-      fsUtils.remove(packagePath) if fsUtils.exists(packagePath)
+      fs.remove(packagePath) if fs.exists(packagePath)
 
     afterEach ->
-      fsUtils.remove(packagePath) if fsUtils.exists(packagePath)
+      fs.remove(packagePath) if fs.exists(packagePath)
 
     it "forces the package's name to be lowercase with dashes", ->
       packageName = "CamelCaseIsForTheBirds"

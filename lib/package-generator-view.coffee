@@ -1,9 +1,4 @@
-{View} = require 'space-pen'
-Editor = require 'editor'
-BufferedProcess = require 'buffered-process'
-$ = require 'jquery'
-_ = require 'underscore'
-fsUtils = require 'fs-utils'
+{_, $, BufferedProcess, Editor, fs, View} = require 'atom-api'
 path = require 'path'
 
 module.exports =
@@ -52,7 +47,7 @@ class PackageGeneratorView extends View
     path.join(path.dirname(packagePath), packageName)
 
   validPackagePath: ->
-    if fsUtils.exists(@getPackagePath())
+    if fs.exists(@getPackagePath())
       @error.text("Path already exists at '#{@getPackagePath()}'")
       @error.show()
       false
