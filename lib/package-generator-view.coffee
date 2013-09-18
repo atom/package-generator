@@ -1,5 +1,6 @@
 {View} = require 'space-pen'
 Editor = require 'editor'
+BufferedProcess = require 'buffered-process'
 $ = require 'jquery'
 _ = require 'underscore'
 fsUtils = require 'fs-utils'
@@ -39,9 +40,9 @@ class PackageGeneratorView extends View
 
   confirm: ->
     if @validPackagePath()
-      @createPackageFiles()
-      atom.open(pathsToOpen: [@getPackagePath()])
-      @detach()
+      @createPackageFiles =>
+        atom.open(pathsToOpen: [@getPackagePath()])
+        @detach()
 
   getPackagePath: ->
     packagePath = @miniEditor.getText()
@@ -56,35 +57,8 @@ class PackageGeneratorView extends View
     else
       true
 
-  createPackageFiles: ->
-    templatePath = fsUtils.resolveOnLoadPath(path.join("package-generator", "template"))
-    packageName = path.basename(@getPackagePath())
+  createPackageFiles: (callback) ->
+    @runCommand("apm", ['init', "-p #{@getPackagePath()}"], callback)
 
-    for templateChildPath in fsUtils.listTreeSync(templatePath)
-      relativePath = templateChildPath.replace(templatePath, "")
-      relativePath = relativePath.replace(/^\//, '')
-      relativePath = relativePath.replace(/\.template$/, '')
-      relativePath = @replacePackageNamePlaceholders(relativePath, packageName)
-
-      sourcePath = path.join(@getPackagePath(), relativePath)
-      if fsUtils.isDirectorySync(templateChildPath)
-        fsUtils.makeTree(sourcePath)
-      if fsUtils.isFileSync(templateChildPath)
-        fsUtils.makeTree(path.dirname(sourcePath))
-        content = @replacePackageNamePlaceholders(fsUtils.read(templateChildPath), packageName)
-        fsUtils.writeSync(sourcePath, content)
-
-  replacePackageNamePlaceholders: (string, packageName) ->
-    placeholderRegex = /__(?:(package-name)|([pP]ackageName)|(package_name))__/g
-    string = string.replace placeholderRegex, (match, dash, camel, underscore) ->
-      if dash
-        _.dasherize(packageName)
-      else if camel
-        if /[a-z]/.test(camel[0])
-          packageName = packageName[0].toLowerCase() + packageName[1...]
-        else if /[A-Z]/.test(camel[0])
-          packageName = packageName[0].toUpperCase() + packageName[1...]
-        _.camelize(packageName)
-
-      else if underscore
-        _.underscore(packageName)
+  runCommand: (command, args, exit) ->
+    new BufferedProcess({command, args, exit})

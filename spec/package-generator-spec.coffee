@@ -52,38 +52,17 @@ describe 'Package Generator', ->
       expect(packagePath).not.toExistOnDisk()
       expect(path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")).toExistOnDisk()
 
-    it "correctly lays out the package files and closes the package generator view", ->
-      rootView.attachToDom()
+    it "calls `apm init`", ->
       rootView.trigger("package-generator:generate")
       packageGeneratorView = rootView.find(".package-generator").view()
       expect(packageGeneratorView.hasParent()).toBeTruthy()
       packageGeneratorView.miniEditor.setText(packagePath)
+      apmExecute = spyOn(packageGeneratorView, 'runCommand')
       packageGeneratorView.trigger "core:confirm"
 
-      expect("#{packagePath}/package.cson").toExistOnDisk()
-      expect("#{packagePath}/lib/#{packageName}.coffee").toExistOnDisk()
-      expect("#{packagePath}/lib/#{packageName}-view.coffee").toExistOnDisk()
-      expect("#{packagePath}/spec/#{packageName}-spec.coffee").toExistOnDisk()
-      expect("#{packagePath}/spec/#{packageName}-view-spec.coffee").toExistOnDisk()
-      expect("#{packagePath}/keymaps/#{packageName}.cson").toExistOnDisk()
-      expect("#{packagePath}/stylesheets/#{packageName}.css").toExistOnDisk()
-
-      expect(packageGeneratorView.hasParent()).toBeFalsy()
-      expect(rootView.getActiveView().isFocused).toBeTruthy()
-
-    it "replaces instances of packageName placeholders in template files", ->
-      rootView.trigger("package-generator:generate")
-      packageGeneratorView = rootView.find(".package-generator").view()
-      expect(packageGeneratorView.hasParent()).toBeTruthy()
-      packageGeneratorView.miniEditor.setText(packagePath)
-      packageGeneratorView.trigger "core:confirm"
-
-      lines = fsUtils.read("#{packagePath}/package.cson").split("\n")
-      expect(lines[0]).toBe "'main': './lib\/#{packageName}'"
-
-      lines = fsUtils.read("#{packagePath}/lib/#{packageName}.coffee").split("\n")
-      expect(lines[0]).toBe "SweetPackageDudeView = require './sweet-package-dude-view'"
-      expect(lines[3]).toBe "  sweetPackageDudeView: null"
+      expect(apmExecute).toHaveBeenCalled()
+      expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+      expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', "-p #{packagePath}"]
 
     it "displays an error when the package path already exists", ->
       rootView.attachToDom()
@@ -102,6 +81,8 @@ describe 'Package Generator', ->
       rootView.trigger("package-generator:generate")
       packageGeneratorView = rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
+      apmExecute = spyOn(packageGeneratorView, 'runCommand')
       packageGeneratorView.trigger "core:confirm"
+      apmExecute.mostRecentCall.args[2]()
 
       expect(atom.open).toHaveBeenCalledWith(pathsToOpen: [packagePath])
