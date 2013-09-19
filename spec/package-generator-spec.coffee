@@ -83,7 +83,7 @@ describe 'Package Generator', ->
 
     it "displays an error when the package path already exists", ->
       rootView.attachToDom()
-      fsUtils.makeTree(packagePath)
+      fs.makeTree(packagePath)
       rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator").view()
 
