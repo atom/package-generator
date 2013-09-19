@@ -9,6 +9,7 @@ path = require 'path'
 module.exports =
 class PackageGeneratorView extends View
   previouslyFocusedElement: null
+  mode: null
 
   @content: ->
     @div class: 'package-generator overlay from-top', =>
@@ -17,15 +18,16 @@ class PackageGeneratorView extends View
       @div class: 'message', outlet: 'message'
 
   initialize: ->
-    rootView.command "package-generator:generate", => @attach()
+    rootView.command "package-generator:generate-package", => @attach('package')
+    rootView.command "package-generator:generate-theme", => @attach('theme')
     @miniEditor.on 'focusout', => @detach()
     @on 'core:confirm', => @confirm()
     @on 'core:cancel', => @detach()
 
-  attach: ->
+  attach: (@mode) ->
     @previouslyFocusedElement = $(':focus')
-    @message.text("Enter package path")
-    placeholderName = "package-name"
+    @message.text("Enter #{mode} path")
+    placeholderName = "#{mode}-name"
     @miniEditor.setText(path.join(_.last(config.userPackageDirPaths), placeholderName))
     pathLength = @miniEditor.getText().length
     @miniEditor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
@@ -58,7 +60,7 @@ class PackageGeneratorView extends View
       true
 
   createPackageFiles: (callback) ->
-    @runCommand("apm", ['init', '-p', "#{@getPackagePath()}"], callback)
+    @runCommand("apm", ['init', "--#{@mode}", "#{@getPackagePath()}"], callback)
 
   runCommand: (command, args, exit) ->
     new BufferedProcess({command, args, exit})

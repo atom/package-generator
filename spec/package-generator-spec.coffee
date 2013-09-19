@@ -10,16 +10,16 @@ describe 'Package Generator', ->
     rootView.open('sample.js')
     atom.activatePackage("package-generator")
 
-  describe "when package-generator:generate is triggered", ->
+  describe "when package-generator:generate-package is triggered", ->
     it "displays a miniEditor", ->
-      rootView.trigger("package-generator:generate")
+      rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator")
       expect(packageGeneratorView).toExist()
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
       rootView.attachToDom()
-      rootView.trigger("package-generator:generate")
+      rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator").view()
       expect(packageGeneratorView.miniEditor.isFocused).toBeTruthy()
       expect(rootView.getActiveView().isFocused).toBeFalsy()
@@ -44,7 +44,7 @@ describe 'Package Generator', ->
     it "forces the package's name to be lowercase with dashes", ->
       packageName = "CamelCaseIsForTheBirds"
       packagePath = path.join(path.dirname(packagePath), packageName)
-      rootView.trigger("package-generator:generate")
+      rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
       packageGeneratorView.trigger "core:confirm"
@@ -52,22 +52,38 @@ describe 'Package Generator', ->
       expect(packagePath).not.toExistOnDisk()
       expect(path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")).toExistOnDisk()
 
-    it "calls `apm init`", ->
-      rootView.trigger("package-generator:generate")
-      packageGeneratorView = rootView.find(".package-generator").view()
-      expect(packageGeneratorView.hasParent()).toBeTruthy()
-      packageGeneratorView.miniEditor.setText(packagePath)
-      apmExecute = spyOn(packageGeneratorView, 'runCommand')
-      packageGeneratorView.trigger "core:confirm"
+    describe 'which is regular package theme', ->
+      beforeEach -> rootView.trigger("package-generator:generate-package")
 
-      expect(apmExecute).toHaveBeenCalled()
-      expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
-      expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '-p', "#{packagePath}"]
+      it "calls `apm init`", ->
+        packageGeneratorView = rootView.find(".package-generator").view()
+        expect(packageGeneratorView.hasParent()).toBeTruthy()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        apmExecute = spyOn(packageGeneratorView, 'runCommand')
+        packageGeneratorView.trigger "core:confirm"
+
+        expect(apmExecute).toHaveBeenCalled()
+        expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{packagePath}"]
+
+    describe 'which is a theme', ->
+      beforeEach -> rootView.trigger("package-generator:generate-theme")
+
+      it "calls `apm init`", ->
+        packageGeneratorView = rootView.find(".package-generator").view()
+        expect(packageGeneratorView.hasParent()).toBeTruthy()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        apmExecute = spyOn(packageGeneratorView, 'runCommand')
+        packageGeneratorView.trigger "core:confirm"
+
+        expect(apmExecute).toHaveBeenCalled()
+        expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--theme', "#{packagePath}"]
 
     it "displays an error when the package path already exists", ->
       rootView.attachToDom()
       fsUtils.makeTree(packagePath)
-      rootView.trigger("package-generator:generate")
+      rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator").view()
 
       expect(packageGeneratorView.hasParent()).toBeTruthy()
@@ -78,7 +94,7 @@ describe 'Package Generator', ->
       expect(packageGeneratorView.error).toBeVisible()
 
     it "opens the package", ->
-      rootView.trigger("package-generator:generate")
+      rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
       apmExecute = spyOn(packageGeneratorView, 'runCommand')
