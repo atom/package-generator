@@ -1,4 +1,4 @@
-{_, $, BufferedProcess, Editor, fs, View} = require 'atom-api'
+{_, $, BufferedProcess, Editor, fs, View} = require 'atom'
 path = require 'path'
 
 module.exports =

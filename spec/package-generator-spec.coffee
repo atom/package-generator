@@ -1,4 +1,4 @@
-{fs, RootView} = require 'atom-api'
+{fs, RootView} = require 'atom'
 path = require 'path'
 
 describe 'Package Generator', ->
