@@ -47,14 +47,12 @@ describe 'Package Generator', ->
       rootView.trigger("package-generator:generate-package")
       packageGeneratorView = rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
+      apmExecute = spyOn(packageGeneratorView, 'runCommand')
       packageGeneratorView.trigger "core:confirm"
 
-      originalDetach = packageGeneratorView.detach
-      packageGeneratorView.detach = =>
-        packageGeneratorView.detach = originalDetach
-        packageGeneratorView.detach()
-        expect(packagePath).not.toExistOnDisk()
-        expect(path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")).toExistOnDisk()
+      expect(apmExecute).toHaveBeenCalled()
+      expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+      expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
 
     describe 'which is regular package theme', ->
       beforeEach -> rootView.trigger("package-generator:generate-package")
