@@ -49,8 +49,12 @@ describe 'Package Generator', ->
       packageGeneratorView.miniEditor.setText(packagePath)
       packageGeneratorView.trigger "core:confirm"
 
-      expect(packagePath).not.toExistOnDisk()
-      expect(path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")).toExistOnDisk()
+      originalDetach = packageGeneratorView.detach
+      packageGeneratorView.detach = =>
+        packageGeneratorView.detach = originalDetach
+        packageGeneratorView.detach()
+        expect(packagePath).not.toExistOnDisk()
+        expect(path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")).toExistOnDisk()
 
     describe 'which is regular package theme', ->
       beforeEach -> rootView.trigger("package-generator:generate-package")
