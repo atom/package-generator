@@ -2,7 +2,6 @@
 path = require 'path'
 
 describe 'Package Generator', ->
-  [packageGenerator] = []
 
   beforeEach ->
     window.rootView = new RootView
