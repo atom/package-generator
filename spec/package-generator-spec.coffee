@@ -27,17 +27,18 @@ describe 'Package Generator', ->
       expect(rootView.getActiveView().isFocused).toBeTruthy()
 
   describe "when a package is generated", ->
-    [packageName, packagePath] = []
+    [packageName, packagePath, packageRoot] = []
 
     beforeEach ->
       spyOn(atom, "open")
 
+      packageRoot = "/tmp/atom-package-generator-specs"
       packageName = "sweet-package-dude"
-      packagePath = "/tmp/atom-packages/#{packageName}"
-      fs.remove(packagePath) if fs.exists(packagePath)
+      packagePath = path.join(packageRoot, packageName)
+      fs.remove(packageRoot) if fs.exists(packageRoot)
 
     afterEach ->
-      fs.remove(packagePath) if fs.exists(packagePath)
+      fs.remove(packageRoot) if fs.exists(packageRoot)
 
     it "forces the package's name to be lowercase with dashes", ->
       packageName = "CamelCaseIsForTheBirds"
