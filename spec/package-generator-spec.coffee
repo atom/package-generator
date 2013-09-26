@@ -54,7 +54,7 @@ describe 'Package Generator', ->
       expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
       expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
 
-    describe 'which is regular package theme', ->
+    describe 'when creating a package', ->
       beforeEach -> rootView.trigger("package-generator:generate-package")
 
       it "calls `apm init`", ->
@@ -68,7 +68,7 @@ describe 'Package Generator', ->
         expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
         expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{packagePath}"]
 
-    describe 'which is a theme', ->
+    describe 'when creating a theme', ->
       beforeEach -> rootView.trigger("package-generator:generate-theme")
 
       it "calls `apm init`", ->
