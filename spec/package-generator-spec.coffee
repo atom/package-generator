@@ -1,5 +1,6 @@
-{fs, RootView} = require 'atom'
+temp = require 'temp'
 path = require 'path'
+{fs, RootView} = require 'atom'
 
 describe 'Package Generator', ->
 
@@ -32,7 +33,7 @@ describe 'Package Generator', ->
     beforeEach ->
       spyOn(atom, "open")
 
-      packageRoot = "/tmp/atom-package-generator-specs"
+      packageRoot = temp.mkdirSync('atom')
       packageName = "sweet-package-dude"
       packagePath = path.join(packageRoot, packageName)
       fs.remove(packageRoot) if fs.exists(packageRoot)
