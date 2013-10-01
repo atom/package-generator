@@ -1,6 +1,6 @@
 {
   "name": "package-generator",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "main": "./lib/package-generator",
   "description": "Generate and open a new sample package.",
   "activationEvents": [
