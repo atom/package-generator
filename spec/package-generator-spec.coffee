@@ -6,7 +6,7 @@ describe 'Package Generator', ->
 
   beforeEach ->
     window.rootView = new RootView
-    rootView.open('sample.js')
+    rootView.openSync('sample.js')
     atom.activatePackage("package-generator")
 
   describe "when package-generator:generate-package is triggered", ->
