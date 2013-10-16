@@ -15,7 +15,7 @@ class PackageGeneratorView extends View
   initialize: ->
     rootView.command "package-generator:generate-package", => @attach('package')
     rootView.command "package-generator:generate-theme", => @attach('theme')
-    @miniEditor.on 'focusout', => @detach()
+    @miniEditor.hiddenInput.on 'focusout', => @detach()
     @on 'core:confirm', => @confirm()
     @on 'core:cancel', => @detach()
 
