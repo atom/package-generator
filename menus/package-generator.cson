@@ -1,0 +1,10 @@
+'menu': [
+  'label': 'Packages'
+  'submenu': [
+    'label': 'Package Generator'
+    'submenu': [
+      { 'label': 'Generate Atom Package', 'command': 'package-generator:generate-package' }
+      { 'label': 'Generate Atom Theme', 'command': 'package-generator:generate-theme' }
+    ]
+  ]
+]
