@@ -62,25 +62,37 @@ describe 'Package Generator', ->
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         packageGeneratorView.miniEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand')
+        enablePackage = spyOn(atom.packages, 'enablePackage')
         packageGeneratorView.trigger "core:confirm"
 
         expect(apmExecute).toHaveBeenCalled()
         expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
         expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{packagePath}"]
 
+        apmExecute.mostRecentCall.args[2]()
+
+        expect(enablePackage).toHaveBeenCalled()
+        expect(enablePackage.mostRecentCall.args[0]).toBe packageName
+
     describe 'when creating a theme', ->
-      beforeEach -> rootView.trigger("package-generator:generate-theme")
+      beforeEach -> rootView.trigger("package-generator:generate-syntax-theme")
 
       it "calls `apm init`", ->
         packageGeneratorView = rootView.find(".package-generator").view()
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         packageGeneratorView.miniEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand')
+        enablePackage = spyOn(atom.packages, 'enablePackage')
         packageGeneratorView.trigger "core:confirm"
 
         expect(apmExecute).toHaveBeenCalled()
         expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
         expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--theme', "#{packagePath}"]
+
+        apmExecute.mostRecentCall.args[2]()
+
+        expect(enablePackage).toHaveBeenCalled()
+        expect(enablePackage.mostRecentCall.args[0]).toBe packageName
 
     it "displays an error when the package path already exists", ->
       rootView.attachToDom()
@@ -100,6 +112,7 @@ describe 'Package Generator', ->
       packageGeneratorView = rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
       apmExecute = spyOn(packageGeneratorView, 'runCommand')
+      loadPackage = spyOn(atom.packages, 'loadPackage')
       packageGeneratorView.trigger "core:confirm"
       apmExecute.mostRecentCall.args[2]()
 

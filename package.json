@@ -5,7 +5,7 @@
   "description": "Generate and open a new sample package.",
   "activationEvents": [
     "package-generator:generate-package",
-    "package-generator:generate-theme"
+    "package-generator:generate-syntax-theme"
   ],
   "dependencies": {
     "temp": "0.5.0"
