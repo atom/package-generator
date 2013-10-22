@@ -62,7 +62,7 @@ describe 'Package Generator', ->
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         packageGeneratorView.miniEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand')
-        loadPackage = spyOn(atom.packages, 'loadPackage')
+        enablePackage = spyOn(atom.packages, 'enablePackage')
         packageGeneratorView.trigger "core:confirm"
 
         expect(apmExecute).toHaveBeenCalled()
@@ -71,8 +71,8 @@ describe 'Package Generator', ->
 
         apmExecute.mostRecentCall.args[2]()
 
-        expect(loadPackage).toHaveBeenCalled()
-        expect(loadPackage.mostRecentCall.args[0]).toBe packageName
+        expect(enablePackage).toHaveBeenCalled()
+        expect(enablePackage.mostRecentCall.args[0]).toBe packageName
 
     describe 'when creating a theme', ->
       beforeEach -> rootView.trigger("package-generator:generate-syntax-theme")
@@ -82,7 +82,7 @@ describe 'Package Generator', ->
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         packageGeneratorView.miniEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand')
-        loadPackage = spyOn(atom.packages, 'loadPackage')
+        enablePackage = spyOn(atom.packages, 'enablePackage')
         packageGeneratorView.trigger "core:confirm"
 
         expect(apmExecute).toHaveBeenCalled()
@@ -91,8 +91,8 @@ describe 'Package Generator', ->
 
         apmExecute.mostRecentCall.args[2]()
 
-        expect(loadPackage).toHaveBeenCalled()
-        expect(loadPackage.mostRecentCall.args[0]).toBe packageName
+        expect(enablePackage).toHaveBeenCalled()
+        expect(enablePackage.mostRecentCall.args[0]).toBe packageName
 
     it "displays an error when the package path already exists", ->
       rootView.attachToDom()

@@ -39,7 +39,7 @@ class PackageGeneratorView extends View
     if @validPackagePath()
       @createPackageFiles =>
         packagePath = @getPackagePath()
-        atom.packages.loadPackage(path.basename(packagePath))
+        atom.packages.enablePackage(path.basename(packagePath))
         atom.open(pathsToOpen: [packagePath])
         @detach()
 
