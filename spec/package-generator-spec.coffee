@@ -51,7 +51,7 @@ describe 'Package Generator', ->
       packageGeneratorView.trigger "core:confirm"
 
       expect(apmExecute).toHaveBeenCalled()
-      expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+      expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
       expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
 
     describe 'when creating a package', ->
@@ -66,7 +66,7 @@ describe 'Package Generator', ->
         packageGeneratorView.trigger "core:confirm"
 
         expect(apmExecute).toHaveBeenCalled()
-        expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+        expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
         expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{packagePath}"]
 
         apmExecute.mostRecentCall.args[2]()
@@ -86,7 +86,7 @@ describe 'Package Generator', ->
         packageGeneratorView.trigger "core:confirm"
 
         expect(apmExecute).toHaveBeenCalled()
-        expect(apmExecute.mostRecentCall.args[0]).toBe 'apm'
+        expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
         expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--theme', "#{packagePath}"]
 
         apmExecute.mostRecentCall.args[2]()
