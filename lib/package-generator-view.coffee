@@ -57,7 +57,7 @@ class PackageGeneratorView extends View
       true
 
   createPackageFiles: (callback) ->
-    @runCommand("apm", ['init', "--#{@mode}", "#{@getPackagePath()}"], callback)
+    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{@getPackagePath()}"], callback)
 
   runCommand: (command, args, exit) ->
     new BufferedProcess({command, args, exit})
