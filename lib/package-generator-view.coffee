@@ -1,4 +1,4 @@
-{_, $, BufferedProcess, Editor, fs, View} = require 'atom'
+{_, $, BufferedNodeProcess, Editor, fs, View} = require 'atom'
 path = require 'path'
 
 module.exports =
@@ -60,4 +60,4 @@ class PackageGeneratorView extends View
     @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{@getPackagePath()}"], callback)
 
   runCommand: (command, args, exit) ->
-    new BufferedProcess({command, args, exit})
+    new BufferedNodeProcess({command, args, exit})
