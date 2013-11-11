@@ -23,7 +23,8 @@ class PackageGeneratorView extends View
     @previouslyFocusedElement = $(':focus')
     @message.text("Enter #{mode} path")
     placeholderName = "#{mode}-name"
-    @miniEditor.setText(path.join(_.last(config.userPackageDirPaths), placeholderName))
+    packagesDirectory = _.last(atom.packages.getPackageDirPaths())
+    @miniEditor.setText(path.join(packagesDirectory, placeholderName))
     pathLength = @miniEditor.getText().length
     @miniEditor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
 
