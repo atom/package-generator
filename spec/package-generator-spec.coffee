@@ -5,27 +5,27 @@ path = require 'path'
 describe 'Package Generator', ->
 
   beforeEach ->
-    window.rootView = new RootView
-    rootView.openSync('sample.js')
-    atom.activatePackage("package-generator")
+    atom.rootView = new RootView
+    atom.rootView.openSync('sample.js')
+    atom.packages.activatePackage("package-generator")
 
   describe "when package-generator:generate-package is triggered", ->
     it "displays a miniEditor", ->
-      rootView.trigger("package-generator:generate-package")
-      packageGeneratorView = rootView.find(".package-generator")
+      atom.rootView.trigger("package-generator:generate-package")
+      packageGeneratorView = atom.rootView.find(".package-generator")
       expect(packageGeneratorView).toExist()
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
-      rootView.attachToDom()
-      rootView.trigger("package-generator:generate-package")
-      packageGeneratorView = rootView.find(".package-generator").view()
+      atom.rootView.attachToDom()
+      atom.rootView.trigger("package-generator:generate-package")
+      packageGeneratorView = atom.rootView.find(".package-generator").view()
       expect(packageGeneratorView.miniEditor.isFocused).toBeTruthy()
-      expect(rootView.getActiveView().isFocused).toBeFalsy()
+      expect(atom.rootView.getActiveView().isFocused).toBeFalsy()
 
       packageGeneratorView.trigger("core:cancel")
       expect(packageGeneratorView.hasParent()).toBeFalsy()
-      expect(rootView.getActiveView().isFocused).toBeTruthy()
+      expect(atom.rootView.getActiveView().isFocused).toBeTruthy()
 
   describe "when a package is generated", ->
     [packageName, packagePath, packageRoot] = []
@@ -44,8 +44,8 @@ describe 'Package Generator', ->
     it "forces the package's name to be lowercase with dashes", ->
       packageName = "CamelCaseIsForTheBirds"
       packagePath = path.join(path.dirname(packagePath), packageName)
-      rootView.trigger("package-generator:generate-package")
-      packageGeneratorView = rootView.find(".package-generator").view()
+      atom.rootView.trigger("package-generator:generate-package")
+      packageGeneratorView = atom.rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
       apmExecute = spyOn(packageGeneratorView, 'runCommand')
       packageGeneratorView.trigger "core:confirm"
@@ -55,10 +55,10 @@ describe 'Package Generator', ->
       expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
 
     describe 'when creating a package', ->
-      beforeEach -> rootView.trigger("package-generator:generate-package")
+      beforeEach -> atom.rootView.trigger("package-generator:generate-package")
 
       it "calls `apm init`", ->
-        packageGeneratorView = rootView.find(".package-generator").view()
+        packageGeneratorView = atom.rootView.find(".package-generator").view()
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         packageGeneratorView.miniEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand')
@@ -75,10 +75,10 @@ describe 'Package Generator', ->
         expect(enablePackage.mostRecentCall.args[0]).toBe packageName
 
     describe 'when creating a theme', ->
-      beforeEach -> rootView.trigger("package-generator:generate-syntax-theme")
+      beforeEach -> atom.rootView.trigger("package-generator:generate-syntax-theme")
 
       it "calls `apm init`", ->
-        packageGeneratorView = rootView.find(".package-generator").view()
+        packageGeneratorView = atom.rootView.find(".package-generator").view()
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         packageGeneratorView.miniEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand')
@@ -95,10 +95,10 @@ describe 'Package Generator', ->
         expect(enablePackage.mostRecentCall.args[0]).toBe packageName
 
     it "displays an error when the package path already exists", ->
-      rootView.attachToDom()
+      atom.rootView.attachToDom()
       fs.makeTree(packagePath)
-      rootView.trigger("package-generator:generate-package")
-      packageGeneratorView = rootView.find(".package-generator").view()
+      atom.rootView.trigger("package-generator:generate-package")
+      packageGeneratorView = atom.rootView.find(".package-generator").view()
 
       expect(packageGeneratorView.hasParent()).toBeTruthy()
       expect(packageGeneratorView.error).not.toBeVisible()
@@ -108,8 +108,8 @@ describe 'Package Generator', ->
       expect(packageGeneratorView.error).toBeVisible()
 
     it "opens the package", ->
-      rootView.trigger("package-generator:generate-package")
-      packageGeneratorView = rootView.find(".package-generator").view()
+      atom.rootView.trigger("package-generator:generate-package")
+      packageGeneratorView = atom.rootView.find(".package-generator").view()
       packageGeneratorView.miniEditor.setText(packagePath)
       apmExecute = spyOn(packageGeneratorView, 'runCommand')
       loadPackage = spyOn(atom.packages, 'loadPackage')
