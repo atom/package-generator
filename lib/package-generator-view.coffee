@@ -50,7 +50,7 @@ class PackageGeneratorView extends View
     path.join(path.dirname(packagePath), packageName)
 
   validPackagePath: ->
-    if fs.exists(@getPackagePath())
+    if fs.existsSync(@getPackagePath())
       @error.text("Path already exists at '#{@getPackagePath()}'")
       @error.show()
       false

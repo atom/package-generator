@@ -36,10 +36,10 @@ describe 'Package Generator', ->
       packageRoot = temp.mkdirSync('atom')
       packageName = "sweet-package-dude"
       packagePath = path.join(packageRoot, packageName)
-      fs.remove(packageRoot) if fs.exists(packageRoot)
+      fs.removeSync(packageRoot)
 
     afterEach ->
-      fs.remove(packageRoot) if fs.exists(packageRoot)
+      fs.removeSync(packageRoot)
 
     it "forces the package's name to be lowercase with dashes", ->
       packageName = "CamelCaseIsForTheBirds"
@@ -96,7 +96,7 @@ describe 'Package Generator', ->
 
     it "displays an error when the package path already exists", ->
       atom.rootView.attachToDom()
-      fs.makeTree(packagePath)
+      fs.makeTreeSync(packagePath)
       atom.rootView.trigger("package-generator:generate-package")
       packageGeneratorView = atom.rootView.find(".package-generator").view()
 
