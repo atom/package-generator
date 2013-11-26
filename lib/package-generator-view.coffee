@@ -1,4 +1,4 @@
-{_, $, BufferedNodeProcess, Editor, fs, View} = require 'atom'
+{_, $, BufferedNodeProcess, EditorView, fs, View} = require 'atom'
 path = require 'path'
 
 module.exports =
@@ -8,7 +8,7 @@ class PackageGeneratorView extends View
 
   @content: ->
     @div class: 'package-generator overlay from-top', =>
-      @subview 'miniEditor', new Editor(mini: true)
+      @subview 'miniEditor', new EditorView(mini: true)
       @div class: 'error', outlet: 'error'
       @div class: 'message', outlet: 'message'
 
