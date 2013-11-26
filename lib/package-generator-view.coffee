@@ -13,8 +13,8 @@ class PackageGeneratorView extends View
       @div class: 'message', outlet: 'message'
 
   initialize: ->
-    atom.rootView.command "package-generator:generate-package", => @attach('package')
-    atom.rootView.command "package-generator:generate-syntax-theme", => @attach('theme')
+    atom.workspaceView.command "package-generator:generate-package", => @attach('package')
+    atom.workspaceView.command "package-generator:generate-syntax-theme", => @attach('theme')
     @miniEditor.hiddenInput.on 'focusout', => @detach()
     @on 'core:confirm', => @confirm()
     @on 'core:cancel', => @detach()
@@ -28,7 +28,7 @@ class PackageGeneratorView extends View
     pathLength = @miniEditor.getText().length
     @miniEditor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
 
-    atom.rootView.append(this)
+    atom.workspaceView.append(this)
     @miniEditor.focus()
 
   detach: ->
