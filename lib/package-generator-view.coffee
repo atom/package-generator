@@ -22,14 +22,16 @@ class PackageGeneratorView extends View
   attach: (@mode) ->
     @previouslyFocusedElement = $(':focus')
     @message.text("Enter #{mode} path")
-    placeholderName = "#{mode}-name"
-    packagesDirectory = _.last(atom.packages.getPackageDirPaths())
-    @miniEditor.setText(path.join(packagesDirectory, placeholderName))
-    pathLength = @miniEditor.getText().length
-    @miniEditor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
-
+    @setPathText("#{mode}-name")
     atom.workspaceView.append(this)
     @miniEditor.focus()
+
+  setPathText: (placeholderName) ->
+    {editor} = @miniEditor
+    packagesDirectory = _.last(atom.packages.getPackageDirPaths())
+    editor.setText(path.join(packagesDirectory, placeholderName))
+    pathLength = editor.getText().length
+    editor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
 
   detach: ->
     return unless @hasParent()
