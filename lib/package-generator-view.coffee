@@ -28,7 +28,7 @@ class PackageGeneratorView extends View
 
   setPathText: (placeholderName) ->
     {editor} = @miniEditor
-    packagesDirectory = _.last(atom.packages.getPackageDirPaths())
+    packagesDirectory = @getPackagesDirectory()
     editor.setText(path.join(packagesDirectory, placeholderName))
     pathLength = editor.getText().length
     editor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
@@ -51,6 +51,9 @@ class PackageGeneratorView extends View
     packageName = _.dasherize(path.basename(packagePath))
     path.join(path.dirname(packagePath), packageName)
 
+  getPackagesDirectory: ->
+    _.last(atom.packages.getPackageDirPaths())
+
   validPackagePath: ->
     if fs.existsSync(@getPackagePath())
       @error.text("Path already exists at '#{@getPackagePath()}'")
@@ -67,7 +70,7 @@ class PackageGeneratorView extends View
 
   createPackageFiles: (callback) ->
     packagePath = @getPackagePath()
-    packagesDirectory = _.last(atom.packages.getPackageDirPaths())
+    packagesDirectory = @getPackagesDirectory()
 
     if packagePath.indexOf(path.join(packagesDirectory, path.sep)) is 0
       @initPackage(packagePath, callback)
