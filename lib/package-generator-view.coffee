@@ -59,8 +59,20 @@ class PackageGeneratorView extends View
     else
       true
 
+  initPackage: (packagePath, callback) ->
+    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
+
+  linkPackage: (packagePath, callback) ->
+    @runCommand(atom.packages.getApmPath(), ['link', "#{packagePath}"], callback)
+
   createPackageFiles: (callback) ->
-    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{@getPackagePath()}"], callback)
+    packagePath = @getPackagePath()
+    packagesDirectory = _.last(atom.packages.getPackageDirPaths())
+
+    if packagePath.indexOf(path.join(packagesDirectory, path.sep)) is 0
+      @initPackage(packagePath, callback)
+    else
+      @initPackage packagePath, => @linkPackage(packagePath, callback)
 
   runCommand: (command, args, exit) ->
     new BufferedNodeProcess({command, args, exit})
