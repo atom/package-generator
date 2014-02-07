@@ -3,29 +3,40 @@ path = require 'path'
 {fs, WorkspaceView} = require 'atom'
 
 describe 'Package Generator', ->
+  [activationPromise] = []
 
   beforeEach ->
     atom.workspaceView = new WorkspaceView
     atom.workspaceView.openSync('sample.js')
-    atom.packages.activatePackage("package-generator")
+    activationPromise = atom.packages.activatePackage("package-generator")
 
   describe "when package-generator:generate-package is triggered", ->
     it "displays a miniEditor", ->
       atom.workspaceView.trigger("package-generator:generate-package")
-      packageGeneratorView = atom.workspaceView.find(".package-generator")
-      expect(packageGeneratorView).toExist()
+
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = atom.workspaceView.find(".package-generator")
+        expect(packageGeneratorView).toExist()
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
       atom.workspaceView.attachToDom()
       atom.workspaceView.trigger("package-generator:generate-package")
-      packageGeneratorView = atom.workspaceView.find(".package-generator").view()
-      expect(packageGeneratorView.miniEditor.isFocused).toBeTruthy()
-      expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
-      packageGeneratorView.trigger("core:cancel")
-      expect(packageGeneratorView.hasParent()).toBeFalsy()
-      expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+        expect(packageGeneratorView.miniEditor.isFocused).toBeTruthy()
+        expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
+
+        packageGeneratorView.trigger("core:cancel")
+        expect(packageGeneratorView.hasParent()).toBeFalsy()
+        expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
   describe "when a package is generated", ->
     [packageName, packagePath, packageRoot] = []
@@ -45,17 +56,26 @@ describe 'Package Generator', ->
       packageName = "CamelCaseIsForTheBirds"
       packagePath = path.join(path.dirname(packagePath), packageName)
       atom.workspaceView.trigger("package-generator:generate-package")
-      packageGeneratorView = atom.workspaceView.find(".package-generator").view()
-      packageGeneratorView.miniEditor.setText(packagePath)
-      apmExecute = spyOn(packageGeneratorView, 'runCommand')
-      packageGeneratorView.trigger "core:confirm"
 
-      expect(apmExecute).toHaveBeenCalled()
-      expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
-      expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        apmExecute = spyOn(packageGeneratorView, 'runCommand')
+        packageGeneratorView.trigger "core:confirm"
+
+        expect(apmExecute).toHaveBeenCalled()
+        expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
+        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
 
     describe 'when creating a package', ->
-      beforeEach -> atom.workspaceView.trigger("package-generator:generate-package")
+      beforeEach ->
+        atom.workspaceView.trigger("package-generator:generate-package")
+
+        waitsForPromise ->
+          activationPromise
 
       describe "when the package is created outside of the packages directory", ->
         it "calls `apm init` and `apm link`", ->
@@ -101,7 +121,11 @@ describe 'Package Generator', ->
             expect(enablePackage.mostRecentCall.args[0]).toBe packageName
 
     describe 'when creating a theme', ->
-      beforeEach -> atom.workspaceView.trigger("package-generator:generate-syntax-theme")
+      beforeEach ->
+        atom.workspaceView.trigger("package-generator:generate-syntax-theme")
+
+        waitsForPromise ->
+          activationPromise
 
       describe "when the theme is created outside of the packages directory", ->
         it "calls `apm init` and `apm link`", ->
@@ -149,23 +173,33 @@ describe 'Package Generator', ->
       atom.workspaceView.attachToDom()
       fs.makeTreeSync(packagePath)
       atom.workspaceView.trigger("package-generator:generate-package")
-      packageGeneratorView = atom.workspaceView.find(".package-generator").view()
 
-      expect(packageGeneratorView.hasParent()).toBeTruthy()
-      expect(packageGeneratorView.error).not.toBeVisible()
-      packageGeneratorView.miniEditor.setText(packagePath)
-      packageGeneratorView.trigger "core:confirm"
-      expect(packageGeneratorView.hasParent()).toBeTruthy()
-      expect(packageGeneratorView.error).toBeVisible()
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+
+        expect(packageGeneratorView.hasParent()).toBeTruthy()
+        expect(packageGeneratorView.error).not.toBeVisible()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        packageGeneratorView.trigger "core:confirm"
+        expect(packageGeneratorView.hasParent()).toBeTruthy()
+        expect(packageGeneratorView.error).toBeVisible()
 
     it "opens the package", ->
       atom.workspaceView.trigger("package-generator:generate-package")
-      packageGeneratorView = atom.workspaceView.find(".package-generator").view()
-      packageGeneratorView.miniEditor.setText(packagePath)
-      apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
-        process.nextTick -> exit()
-      loadPackage = spyOn(atom.packages, 'loadPackage')
-      packageGeneratorView.trigger "core:confirm"
+
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+          process.nextTick -> exit()
+        loadPackage = spyOn(atom.packages, 'loadPackage')
+        packageGeneratorView.trigger "core:confirm"
 
       waitsFor ->
         atom.open.callCount is 1
