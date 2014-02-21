@@ -22,8 +22,8 @@ class PackageGeneratorView extends View
   attach: (@mode) ->
     @previouslyFocusedElement = $(':focus')
     @message.text("Enter #{mode} path")
-    @setPathText("#{mode}-name")
     atom.workspaceView.append(this)
+    @setPathText("#{mode}-name")
     @miniEditor.focus()
 
   setPathText: (placeholderName) ->
