@@ -84,20 +84,17 @@ describe 'Package Generator', ->
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
-          enablePackage = spyOn(atom.packages, 'enablePackage')
           packageGeneratorView.trigger "core:confirm"
 
           waitsFor ->
-            enablePackage.callCount is 1
+            atom.open.callCount is 1
 
           runs ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
-
-            expect(enablePackage).toHaveBeenCalled()
-            expect(enablePackage.mostRecentCall.args[0]).toBe packageName
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
       describe "when the package is created inside the packages directory", ->
         it "calls `apm init`", ->
@@ -107,18 +104,15 @@ describe 'Package Generator', ->
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
-          enablePackage = spyOn(atom.packages, 'enablePackage')
           packageGeneratorView.trigger "core:confirm"
 
           waitsFor ->
-            enablePackage.callCount is 1
+            atom.open.callCount
 
           runs ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
-
-            expect(enablePackage).toHaveBeenCalled()
-            expect(enablePackage.mostRecentCall.args[0]).toBe packageName
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
     describe 'when creating a theme', ->
       beforeEach ->
@@ -134,19 +128,17 @@ describe 'Package Generator', ->
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
-          enablePackage = spyOn(atom.packages, 'enablePackage')
           packageGeneratorView.trigger "core:confirm"
 
           waitsFor ->
-            enablePackage.callCount is 1
+            atom.open.callCount is 1
 
           runs ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--theme', "#{packagePath}"]
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
-
-            expect(enablePackage.mostRecentCall.args[0]).toBe packageName
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
       describe "when the theme is created inside of the packages directory", ->
         it "calls `apm init`", ->
@@ -156,18 +148,15 @@ describe 'Package Generator', ->
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
-          enablePackage = spyOn(atom.packages, 'enablePackage')
           packageGeneratorView.trigger "core:confirm"
 
           waitsFor ->
-            enablePackage.callCount is 1
+            atom.open.callCount is 1
 
           runs ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--theme', "#{packagePath}"]
-
-            expect(enablePackage).toHaveBeenCalled()
-            expect(enablePackage.mostRecentCall.args[0]).toBe packageName
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
     it "displays an error when the package path already exists", ->
       atom.workspaceView.attachToDom()
