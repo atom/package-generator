@@ -2,7 +2,7 @@
   "name": "package-generator",
   "version": "0.27.0",
   "main": "./lib/package-generator",
-  "description": "Generate and open a new sample package.",
+  "description": "Generates and opens a new sample package or syntax theme.",
   "license": "MIT",
   "activationEvents": [
     "package-generator:generate-package",

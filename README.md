@@ -1,3 +1,3 @@
-# Package generator
+# Package Generator package
 
-Atom package to create a new Atom package from within Atom.
+Generates and opens a new sample package or syntax theme in Atom.
