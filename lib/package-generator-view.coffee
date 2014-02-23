@@ -1,6 +1,7 @@
-_ = require 'underscore-plus'
-{$, BufferedNodeProcess, EditorView, fs, View} = require 'atom'
 path = require 'path'
+_ = require 'underscore-plus'
+{$, BufferedNodeProcess, EditorView, View} = require 'atom'
+fs = require 'fs-plus'
 
 module.exports =
 class PackageGeneratorView extends View

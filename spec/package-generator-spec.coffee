@@ -1,6 +1,7 @@
-temp = require 'temp'
 path = require 'path'
-{fs, WorkspaceView} = require 'atom'
+fs = require 'fs-plus'
+temp = require 'temp'
+{WorkspaceView} = require 'atom'
 
 describe 'Package Generator', ->
   [activationPromise] = []

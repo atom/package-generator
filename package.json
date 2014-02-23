@@ -9,6 +9,7 @@
     "package-generator:generate-syntax-theme"
   ],
   "dependencies": {
+    "fs-plus": "2.x",
     "temp": "0.5.0",
     "underscore-plus": "1.x"
   },
