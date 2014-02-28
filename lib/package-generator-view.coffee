@@ -25,15 +25,20 @@ class PackageGeneratorView extends View
     @previouslyFocusedElement = $(':focus')
     @message.text("Enter #{mode} path")
     atom.workspaceView.append(this)
-    @setPathText("#{mode}-name")
+    if @mode == 'package'
+      @setPathText("my-package")
+    else
+      @setPathText("my-theme-syntax", [0, 8])
     @miniEditor.focus()
 
-  setPathText: (placeholderName) ->
+  setPathText: (placeholderName, rangeToSelect) ->
     {editor} = @miniEditor
+    rangeToSelect ?= [0, placeholderName.length]
     packagesDirectory = @getPackagesDirectory()
     editor.setText(path.join(packagesDirectory, placeholderName))
     pathLength = editor.getText().length
-    editor.setSelectedBufferRange([[0, pathLength - placeholderName.length], [0, pathLength]])
+    endOfDirectoryIndex = pathLength - placeholderName.length
+    editor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
 
   detach: ->
     return unless @hasParent()

@@ -12,15 +12,28 @@ describe 'Package Generator', ->
     activationPromise = atom.packages.activatePackage("package-generator")
 
   describe "when package-generator:generate-package is triggered", ->
-    it "displays a miniEditor", ->
+    it "displays a miniEditor with the correct text selected", ->
       atom.workspaceView.trigger("package-generator:generate-package")
 
       waitsForPromise ->
         activationPromise
 
       runs ->
-        packageGeneratorView = atom.workspaceView.find(".package-generator")
-        expect(packageGeneratorView).toExist()
+        packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+        themeName = packageGeneratorView.miniEditor.editor.getSelectedText()
+        expect(themeName).toEqual 'my-package'
+
+  describe "when package-generator:generate-theme is triggered", ->
+    it "displays a miniEditor with correct text selected", ->
+      atom.workspaceView.trigger("package-generator:generate-syntax-theme")
+
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+        themeName = packageGeneratorView.miniEditor.editor.getSelectedText()
+        expect(themeName).toEqual 'my-theme'
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
