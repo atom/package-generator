@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{$, BufferedNodeProcess, EditorView, View} = require 'atom'
+{$, BufferedProcess, EditorView, View} = require 'atom'
 fs = require 'fs-plus'
 
 module.exports =
@@ -84,4 +84,4 @@ class PackageGeneratorView extends View
       @initPackage packagePath, => @linkPackage(packagePath, callback)
 
   runCommand: (command, args, exit) ->
-    new BufferedNodeProcess({command, args, exit})
+    new BufferedProcess({command, args, exit})
