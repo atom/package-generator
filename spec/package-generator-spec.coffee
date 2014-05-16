@@ -12,7 +12,7 @@ describe 'Package Generator', ->
     activationPromise = atom.packages.activatePackage("package-generator")
 
   describe "when package-generator:generate-package is triggered", ->
-    it "displays a miniEditor with the correct text selected", ->
+    it "displays a miniEditor with the correct text and selection", ->
       atom.workspaceView.trigger("package-generator:generate-package")
 
       waitsForPromise ->
@@ -20,11 +20,15 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = atom.workspaceView.find(".package-generator").view()
-        themeName = packageGeneratorView.miniEditor.editor.getSelectedText()
-        expect(themeName).toEqual 'my-package'
+        packageName = packageGeneratorView.miniEditor.editor.getSelectedText()
+        expect(packageName).toEqual 'my-package'
+
+        fullPath = packageGeneratorView.miniEditor.editor.getText()
+        base = atom.config.get 'core.projectHome'
+        expect(fullPath).toEqual path.join(base, 'my-package')
 
   describe "when package-generator:generate-theme is triggered", ->
-    it "displays a miniEditor with correct text selected", ->
+    it "displays a miniEditor with correct text and selection", ->
       atom.workspaceView.trigger("package-generator:generate-syntax-theme")
 
       waitsForPromise ->
@@ -34,6 +38,10 @@ describe 'Package Generator', ->
         packageGeneratorView = atom.workspaceView.find(".package-generator").view()
         themeName = packageGeneratorView.miniEditor.editor.getSelectedText()
         expect(themeName).toEqual 'my-theme'
+
+        fullPath = packageGeneratorView.miniEditor.editor.getText()
+        base = atom.config.get 'core.projectHome'
+        expect(fullPath).toEqual path.join(base, 'my-theme-syntax')
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
