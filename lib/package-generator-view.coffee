@@ -58,7 +58,7 @@ class PackageGeneratorView extends View
     path.join(path.dirname(packagePath), packageName)
 
   getPackagesDirectory: ->
-    _.last(atom.packages.getPackageDirPaths())
+    atom.config.get 'core.projectHome'
 
   validPackagePath: ->
     if fs.existsSync(@getPackagePath())
