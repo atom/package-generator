@@ -100,22 +100,38 @@ describe 'Package Generator', ->
           activationPromise
 
       describe "when the package is created outside of the packages directory", ->
-        it "calls `apm init` and `apm link`", ->
+        [apmExecute] = []
+
+        generateOutside = (callback) ->
           packageGeneratorView = atom.workspaceView.find(".package-generator").view()
           expect(packageGeneratorView.hasParent()).toBeTruthy()
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
           packageGeneratorView.trigger "core:confirm"
-
           waitsFor ->
             atom.open.callCount is 1
 
-          runs ->
+          runs callback
+
+        it "calls `apm init` and `apm link`", ->
+          atom.config.set 'package-generator.createInDevMode', false
+
+          generateOutside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
+
+        it "calls `apm init` and `apm link --dev`", ->
+          atom.config.set 'package-generator.createInDevMode', false
+
+          generateOutside ->
+            expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
+            expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[1][1]).toEqual ['link', '--dev', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
       describe "when the package is created inside the packages directory", ->
