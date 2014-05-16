@@ -125,7 +125,7 @@ describe 'Package Generator', ->
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
         it "calls `apm init` and `apm link --dev`", ->
-          atom.config.set 'package-generator.createInDevMode', false
+          atom.config.set 'package-generator.createInDevMode', true
 
           generateOutside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
