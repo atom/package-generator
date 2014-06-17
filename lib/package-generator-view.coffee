@@ -74,7 +74,12 @@ class PackageGeneratorView extends View
     @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
 
   linkPackage: (packagePath, callback) ->
-    @runCommand(atom.packages.getApmPath(), ['link', "#{packagePath}"], callback)
+    args = ['link']
+    if atom.config.get 'package-generator.createInDevMode'
+      args.push '--dev'
+    args.push packagePath.toString()
+
+    @runCommand(atom.packages.getApmPath(), args, callback)
 
   createPackageFiles: (callback) ->
     packagePath = @getPackagePath()
