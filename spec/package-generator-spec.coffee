@@ -136,8 +136,8 @@ describe 'Package Generator', ->
 
       describe "when the package is created inside the packages directory", ->
         it "calls `apm init`", ->
-          spyOn(atom.packages, 'getPackageDirPaths').andReturn [packageRoot]
           packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+          spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
           expect(packageGeneratorView.hasParent()).toBeTruthy()
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
@@ -151,6 +151,7 @@ describe 'Package Generator', ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
+            expect(apmExecute.argsForCall[1]).toBeUndefined()
 
     describe 'when creating a theme', ->
       beforeEach ->
@@ -180,8 +181,8 @@ describe 'Package Generator', ->
 
       describe "when the theme is created inside of the packages directory", ->
         it "calls `apm init`", ->
-          spyOn(atom.packages, 'getPackageDirPaths').andReturn [packageRoot]
           packageGeneratorView = atom.workspaceView.find(".package-generator").view()
+          spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
           expect(packageGeneratorView.hasParent()).toBeTruthy()
           packageGeneratorView.miniEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
@@ -195,6 +196,7 @@ describe 'Package Generator', ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--theme', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
+            expect(apmExecute.argsForCall[1]).toBeUndefined()
 
     it "displays an error when the package path already exists", ->
       atom.workspaceView.attachToDom()

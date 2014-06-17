@@ -81,11 +81,18 @@ class PackageGeneratorView extends View
 
     @runCommand(atom.packages.getApmPath(), args, callback)
 
+  isStoredInDotAtom: (packagePath) ->
+    packagesPath = path.join(atom.getConfigDirPath(), 'packages', path.sep)
+    return true if packagePath.indexOf(packagesPath) is 0
+
+    devPackagesPath = path.join(atom.getConfigDirPath(), 'dev', 'packages', path.sep)
+    packagePath.indexOf(devPackagesPath) is 0
+
   createPackageFiles: (callback) ->
     packagePath = @getPackagePath()
     packagesDirectory = @getPackagesDirectory()
 
-    if packagePath.indexOf(path.join(packagesDirectory, path.sep)) is 0
+    if @isStoredInDotAtom(packagePath)
       @initPackage(packagePath, callback)
     else
       @initPackage packagePath, => @linkPackage(packagePath, callback)
