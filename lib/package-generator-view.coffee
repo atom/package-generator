@@ -75,8 +75,7 @@ class PackageGeneratorView extends View
 
   linkPackage: (packagePath, callback) ->
     args = ['link']
-    if atom.config.get 'package-generator.createInDevMode'
-      args.push '--dev'
+    args.push('--dev') if atom.config.get('package-generator.createInDevMode')
     args.push packagePath.toString()
 
     @runCommand(atom.packages.getApmPath(), args, callback)
