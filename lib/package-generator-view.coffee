@@ -7,6 +7,7 @@ module.exports =
 class PackageGeneratorView extends View
   previouslyFocusedElement: null
   mode: null
+  attached: false
 
   @content: ->
     @div class: 'package-generator overlay from-top', =>
@@ -22,7 +23,8 @@ class PackageGeneratorView extends View
     @on 'core:cancel', => @detach()
 
   attach: (@mode) ->
-    @previouslyFocusedElement = $(':focus')
+    @attached = true
+    @previouslyFocusedElement = $(document.activeElement)
     @message.text("Enter #{mode} path")
     atom.workspaceView.append(this)
     if @mode == 'package'
@@ -41,7 +43,8 @@ class PackageGeneratorView extends View
     editor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
 
   detach: ->
-    return unless @hasParent()
+    return unless @attached
+    @attached = false
     @previouslyFocusedElement?.focus()
     super
 
