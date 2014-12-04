@@ -8,7 +8,6 @@ module.exports =
 class PackageGeneratorView extends View
   previouslyFocusedElement: null
   mode: null
-  attached: false
 
   @content: ->
     @div class: 'package-generator', =>
@@ -28,7 +27,6 @@ class PackageGeneratorView extends View
 
   attach: (@mode) ->
     @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
-    @attached = true
     @previouslyFocusedElement = $(document.activeElement)
     @panel.show()
     @message.text("Enter #{mode} path")
