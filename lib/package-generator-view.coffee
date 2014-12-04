@@ -25,6 +25,9 @@ class PackageGeneratorView extends View
       'core:confirm': => @confirm()
       'core:cancel': => @close()
 
+  destroy: ->
+    @panel?.destroy()
+
   attach: (@mode) ->
     @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
     @previouslyFocusedElement = $(document.activeElement)

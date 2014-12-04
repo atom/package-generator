@@ -10,4 +10,4 @@ module.exports =
     @view = new PackageGeneratorView()
 
   deactivate: ->
-    @view?.remove()
+    @view?.destroy()
