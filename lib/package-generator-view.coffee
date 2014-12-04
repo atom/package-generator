@@ -1,6 +1,6 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{$, EditorView, View} = require 'atom-space-pen-views'
+{$, TextEditorView, View} = require 'atom-space-pen-views'
 {BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
 
@@ -12,7 +12,7 @@ class PackageGeneratorView extends View
 
   @content: ->
     @div class: 'package-generator', =>
-      @subview 'miniEditor', new EditorView(mini: true)
+      @subview 'miniEditor', new TextEditorView(mini: true)
       @div class: 'error', outlet: 'error'
       @div class: 'message', outlet: 'message'
 
@@ -21,7 +21,7 @@ class PackageGeneratorView extends View
       'package-generator:generate-package': => @attach('package')
       'package-generator:generate-syntax-theme': => @attach('theme')
 
-    @miniEditor.hiddenInput.on 'focusout', => @close()
+    @miniEditor.on 'blur', => @close()
     @on 'core:confirm', => @confirm()
     @on 'core:cancel', => @close()
 
@@ -38,7 +38,7 @@ class PackageGeneratorView extends View
     @miniEditor.focus()
 
   setPathText: (placeholderName, rangeToSelect) ->
-    {editor} = @miniEditor
+    editor = @miniEditor.getModel()
     rangeToSelect ?= [0, placeholderName.length]
     packagesDirectory = @getPackagesDirectory()
     editor.setText(path.join(packagesDirectory, placeholderName))

@@ -20,10 +20,10 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = atom.workspaceView.find(".package-generator").view()
-        packageName = packageGeneratorView.miniEditor.editor.getSelectedText()
+        packageName = packageGeneratorView.miniEditor.getModel().getSelectedText()
         expect(packageName).toEqual 'my-package'
 
-        fullPath = packageGeneratorView.miniEditor.editor.getText()
+        fullPath = packageGeneratorView.miniEditor.getModel().getText()
         base = atom.config.get 'core.projectHome'
         expect(fullPath).toEqual path.join(base, 'my-package')
 
@@ -36,10 +36,10 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = atom.workspaceView.find(".package-generator").view()
-        themeName = packageGeneratorView.miniEditor.editor.getSelectedText()
+        themeName = packageGeneratorView.miniEditor.getModel().getSelectedText()
         expect(themeName).toEqual 'my-theme'
 
-        fullPath = packageGeneratorView.miniEditor.editor.getText()
+        fullPath = packageGeneratorView.miniEditor.getModel().getText()
         base = atom.config.get 'core.projectHome'
         expect(fullPath).toEqual path.join(base, 'my-theme-syntax')
 
