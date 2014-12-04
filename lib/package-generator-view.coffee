@@ -22,8 +22,9 @@ class PackageGeneratorView extends View
       'package-generator:generate-syntax-theme': => @attach('theme')
 
     @miniEditor.on 'blur', => @close()
-    @on 'core:confirm', => @confirm()
-    @on 'core:cancel', => @close()
+    atom.commands.add @element,
+      'core:confirm': => @confirm()
+      'core:cancel': => @close()
 
   attach: (@mode) ->
     @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
