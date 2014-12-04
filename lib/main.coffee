@@ -1,8 +1,10 @@
 PackageGeneratorView = require './package-generator-view'
 
 module.exports =
-  configDefaults:
-    createInDevMode: false
+  config:
+    createInDevMode:
+      default: true
+      type: 'boolean'
 
   activate: ->
     @view = new PackageGeneratorView()
