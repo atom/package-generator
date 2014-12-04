@@ -1,32 +1,39 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{$, BufferedProcess, EditorView, View} = require 'atom'
+{$, TextEditorView, View} = require 'atom-space-pen-views'
+{BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
 
 module.exports =
 class PackageGeneratorView extends View
   previouslyFocusedElement: null
   mode: null
-  attached: false
 
   @content: ->
-    @div class: 'package-generator overlay from-top', =>
-      @subview 'miniEditor', new EditorView(mini: true)
+    @div class: 'package-generator', =>
+      @subview 'miniEditor', new TextEditorView(mini: true)
       @div class: 'error', outlet: 'error'
       @div class: 'message', outlet: 'message'
 
   initialize: ->
-    atom.workspaceView.command "package-generator:generate-package", => @attach('package')
-    atom.workspaceView.command "package-generator:generate-syntax-theme", => @attach('theme')
-    @miniEditor.hiddenInput.on 'focusout', => @detach()
-    @on 'core:confirm', => @confirm()
-    @on 'core:cancel', => @detach()
+    @commandSubscription = atom.commands.add 'atom-workspace',
+      'package-generator:generate-package': => @attach('package')
+      'package-generator:generate-syntax-theme': => @attach('theme')
+
+    @miniEditor.on 'blur', => @close()
+    atom.commands.add @element,
+      'core:confirm': => @confirm()
+      'core:cancel': => @close()
+
+  destroy: ->
+    @panel?.destroy()
+    @commandSubscription.dispose()
 
   attach: (@mode) ->
-    @attached = true
+    @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
     @previouslyFocusedElement = $(document.activeElement)
+    @panel.show()
     @message.text("Enter #{mode} path")
-    atom.workspaceView.append(this)
     if @mode == 'package'
       @setPathText("my-package")
     else
@@ -34,7 +41,7 @@ class PackageGeneratorView extends View
     @miniEditor.focus()
 
   setPathText: (placeholderName, rangeToSelect) ->
-    {editor} = @miniEditor
+    editor = @miniEditor.getModel()
     rangeToSelect ?= [0, placeholderName.length]
     packagesDirectory = @getPackagesDirectory()
     editor.setText(path.join(packagesDirectory, placeholderName))
@@ -42,18 +49,17 @@ class PackageGeneratorView extends View
     endOfDirectoryIndex = pathLength - placeholderName.length
     editor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
 
-  detach: ->
-    return unless @attached
-    @attached = false
+  close: ->
+    return unless @panel.isVisible()
+    @panel.hide()
     @previouslyFocusedElement?.focus()
-    super
 
   confirm: ->
     if @validPackagePath()
       @createPackageFiles =>
         packagePath = @getPackagePath()
         atom.open(pathsToOpen: [packagePath])
-        @detach()
+        @close()
 
   getPackagePath: ->
     packagePath = @miniEditor.getText()

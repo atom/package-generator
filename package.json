@@ -4,11 +4,14 @@
   "main": "./lib/main",
   "description": "Generates and opens a new sample package or syntax theme.",
   "license": "MIT",
-  "activationEvents": [
-    "package-generator:generate-package",
-    "package-generator:generate-syntax-theme"
-  ],
+  "activationCommands": {
+    "atom-workspace": [
+      "package-generator:generate-package",
+      "package-generator:generate-syntax-theme"
+    ]
+  },
   "dependencies": {
+    "atom-space-pen-views": "^0.20.0",
     "fs-plus": "2.x",
     "temp": "0.5.0",
     "underscore-plus": "1.x"

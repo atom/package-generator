@@ -1,11 +1,13 @@
 PackageGeneratorView = require './package-generator-view'
 
 module.exports =
-  configDefaults:
-    createInDevMode: false
+  config:
+    createInDevMode:
+      default: false
+      type: 'boolean'
 
   activate: ->
     @view = new PackageGeneratorView()
 
   deactivate: ->
-    @view?.remove()
+    @view?.destroy()
