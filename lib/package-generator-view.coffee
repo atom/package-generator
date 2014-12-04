@@ -10,7 +10,7 @@ class PackageGeneratorView extends View
   attached: false
 
   @content: ->
-    @div class: 'package-generator overlay from-top', =>
+    @div class: 'package-generator', =>
       @subview 'miniEditor', new EditorView(mini: true)
       @div class: 'error', outlet: 'error'
       @div class: 'message', outlet: 'message'
@@ -20,15 +20,16 @@ class PackageGeneratorView extends View
       'package-generator:generate-package': => @attach('package')
       'package-generator:generate-syntax-theme': => @attach('theme')
 
-    @miniEditor.hiddenInput.on 'focusout', => @detach()
+    @miniEditor.hiddenInput.on 'focusout', => @close()
     @on 'core:confirm', => @confirm()
-    @on 'core:cancel', => @detach()
+    @on 'core:cancel', => @close()
 
   attach: (@mode) ->
+    @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
     @attached = true
     @previouslyFocusedElement = $(document.activeElement)
+    @panel.show()
     @message.text("Enter #{mode} path")
-    atom.workspaceView.append(this)
     if @mode == 'package'
       @setPathText("my-package")
     else
@@ -44,18 +45,17 @@ class PackageGeneratorView extends View
     endOfDirectoryIndex = pathLength - placeholderName.length
     editor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
 
-  detach: ->
-    return unless @attached
-    @attached = false
+  close: ->
+    return unless @panel.isVisible()
+    @panel.hide()
     @previouslyFocusedElement?.focus()
-    super
 
   confirm: ->
     if @validPackagePath()
       @createPackageFiles =>
         packagePath = @getPackagePath()
         atom.open(pathsToOpen: [packagePath])
-        @detach()
+        @close()
 
   getPackagePath: ->
     packagePath = @miniEditor.getText()
