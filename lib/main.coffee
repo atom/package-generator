@@ -3,7 +3,7 @@ PackageGeneratorView = require './package-generator-view'
 module.exports =
   config:
     createInDevMode:
-      default: true
+      default: false
       type: 'boolean'
 
   activate: ->
