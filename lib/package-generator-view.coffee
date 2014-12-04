@@ -1,6 +1,7 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{$, BufferedProcess, EditorView, View} = require 'atom'
+{$, EditorView, View} = require 'atom-space-pen-views'
+{BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
 
 module.exports =
