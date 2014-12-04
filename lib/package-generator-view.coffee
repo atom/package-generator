@@ -16,7 +16,7 @@ class PackageGeneratorView extends View
       @div class: 'message', outlet: 'message'
 
   initialize: ->
-    @commandsSubscriptions = atom.commands.add 'atom-workspace',
+    @commandSubscription = atom.commands.add 'atom-workspace',
       'package-generator:generate-package': => @attach('package')
       'package-generator:generate-syntax-theme': => @attach('theme')
 
@@ -27,7 +27,7 @@ class PackageGeneratorView extends View
 
   destroy: ->
     @panel?.destroy()
-    @commandsSubscriptions.dispose()
+    @commandSubscription.dispose()
 
   attach: (@mode) ->
     @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
