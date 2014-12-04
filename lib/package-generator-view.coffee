@@ -16,8 +16,10 @@ class PackageGeneratorView extends View
       @div class: 'message', outlet: 'message'
 
   initialize: ->
-    atom.workspaceView.command "package-generator:generate-package", => @attach('package')
-    atom.workspaceView.command "package-generator:generate-syntax-theme", => @attach('theme')
+    atom.commands.add 'atom-workspace',
+      'package-generator:generate-package': => @attach('package')
+      'package-generator:generate-syntax-theme': => @attach('theme')
+
     @miniEditor.hiddenInput.on 'focusout', => @detach()
     @on 'core:confirm', => @confirm()
     @on 'core:cancel', => @detach()
