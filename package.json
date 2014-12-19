@@ -1,6 +1,6 @@
 {
   "name": "package-generator",
-  "version": "0.33.0",
+  "version": "0.34.0",
   "main": "./lib/main",
   "description": "Generates and opens a new sample package or syntax theme.",
   "license": "MIT",
