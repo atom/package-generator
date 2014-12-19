@@ -4,7 +4,7 @@
     'label': 'Package Generator'
     'submenu': [
       { 'label': 'Generate Atom Package', 'command': 'package-generator:generate-package' }
-      { 'label': 'Generate Atom Theme', 'command': 'package-generator:generate-theme' }
+      { 'label': 'Generate Atom Syntax Theme', 'command': 'package-generator:generate-syntax-theme' }
     ]
   ]
 ]

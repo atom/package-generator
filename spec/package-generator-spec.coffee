@@ -32,7 +32,7 @@ describe 'Package Generator', ->
         base = atom.config.get 'core.projectHome'
         expect(fullPath).toEqual path.join(base, 'my-package')
 
-  describe "when package-generator:generate-theme is triggered", ->
+  describe "when package-generator:generate-syntax-theme is triggered", ->
     it "displays a miniEditor with correct text and selection", ->
       atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-syntax-theme")
 
