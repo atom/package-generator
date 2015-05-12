@@ -63,6 +63,7 @@ class PackageGeneratorView extends View
 
   getPackagePath: ->
     packagePath = @miniEditor.getText()
+    packagePath = packagePath.trim()
     packageName = _.dasherize(path.basename(packagePath))
     path.join(path.dirname(packagePath), packageName)
 
