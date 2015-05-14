@@ -21,7 +21,6 @@ class PackageGeneratorView extends View
             @button outlet: 'npBtn', class: 'btn',click: 'setupCustomPath', 'new path'
         @div class: 'error', outlet: 'error'
         @div class: 'message', outlet: 'message'
-        @div outlet: 'output'
 
   initialize: ->
     @commandSubscription = atom.commands.add 'atom-workspace',
@@ -29,19 +28,11 @@ class PackageGeneratorView extends View
       'package-generator:generate-syntax-theme': => @attach('theme')
 
     @container.on 'blur', => @close()
-    @pathEditor.getModel().on 'change', => @updateOutput()
-    @nameEditor.getModel().on 'change', => @updateOutput()
-    # @pathEditor.on 'dh', => @updateOutput()
 
     atom.commands.add @element,
       'core:confirm': => @confirm()
       'core:cancel': => @close()
 
-  updateOutput: ->
-    @output.text @buildPackagePath()
-
-  # a little helper to make adding/removing btn select css
-  # a little less annoying.
   swapBtnSelect: (sel, nosel) ->
     sel.addClass 'selected'
     nosel.removeClass 'selected'
@@ -50,7 +41,6 @@ class PackageGeneratorView extends View
   # changes the panel view to use a custom path.
   setupCustomPath: () ->
     @swapBtnSelect @npBtn, @dpBtn
-    @pathEditor.setText @getPackagesDirectory()
     @pathEditor.show()
 
   # reverts the panel to the default view
@@ -72,6 +62,7 @@ class PackageGeneratorView extends View
       @setNameText("my-awesome-package")
     else
       @setNameText("my-awesome-syntax")
+    @setupDefaultPath()
     @nameEditor.focus()
 
   close: ->
@@ -81,39 +72,60 @@ class PackageGeneratorView extends View
 
   setNameText: (placeholderName) ->
     nameEditor = @nameEditor.getModel()
-    @setupDefaultPath() # setting up the pathEditor
     nameEditor.setText(placeholderName)
     nameEditor.setSelectedBufferRange([[0, 0], [0, placeholderName.length]])
 
   confirm: ->
-    if @validPackagePath()
-      @createPackageFiles =>
-        packagePath = @buildPackagePath()
-        atom.open(pathsToOpen: [packagePath])
+    finalPackageLocation = @buildPackagePath()
+    if @validPackagePath(finalPackageLocation)
+      @createPackageFiles finalPackageLocation, =>
+        atom.open(pathsToOpen: [finalPackageLocation])
         @close()
 
   buildPackagePath: ->
-    # packagePath = @miniEditor.getText().trim()
-    # packageName = _.dasherize(path.basename(packagePath))
-    # path.join(path.dirname(packagePath), packageName)
     pkgName = _.dasherize @nameEditor.getText().trim()
     pkgPath = @pathEditor.getText().trim()
     path.join(path.dirname(pkgPath), pkgName)
 
-  # retuns the location of either the specified, env variable, or default
-  # packages directory
   getPackagesDirectory: ->
     atom.config.get('core.projectHome') or
       process.env.ATOM_REPOS_HOME or
       path.join(fs.getHomeDirectory(), 'github')
 
-  validPackagePath: ->
-    if fs.existsSync(@buildPackagePath())
-      @error.text("Path already exists at '#{@buildPackagePath()}'")
+  userIsOwner: (stats) ->
+    owner = (process.getuid() is stats.uid)
+    owner && (stats.mode & 0o00200)
+
+  usersGroupCanWrite: (stats) ->
+    inGroup = (process.getgid() is stats.gid)
+    inGroup && (stats.mode & 0o00020)
+
+  anyoneCanWrite: (stats) ->
+    (stats.mode & 0o00002)
+
+  validPermission: (saveLocation) ->
+    stats = fs.statSync path.dirname(saveLocation)
+    if @userIsOwner(stats) or
+       @usersGroupCanWrite(stats) or
+       @anyoneCanWrite(stats)
+      return true
+    else
+      @error.text("You do not have the required privilege to save in #{path.dirname(saveLocation)}.")
       @error.show()
       false
-    else
+
+  alreadyPackage: (saveLocation) ->
+    if fs.existsSync(saveLocation)
+      @error.text("Path already exists at '#{saveLocation}'")
+      @error.show()
       true
+    else
+      false
+
+  validPackagePath: (finalPackageLocation) ->
+    return false if @alreadyPackage finalPackageLocation
+    return false if not @validPermission finalPackageLocation
+    true
 
   initPackage: (packagePath, callback) ->
     @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
@@ -132,7 +144,7 @@ class PackageGeneratorView extends View
     devPackagesPath = path.join(atom.getConfigDirPath(), 'dev', 'packages', path.sep)
     packagePath.indexOf(devPackagesPath) is 0
 
-  createPackageFiles: (callback) ->
+  createPackageFiles: (saveLocation, callback) ->
     packagePath = @buildPackagePath()
     packagesDirectory = @getPackagesDirectory()
 
