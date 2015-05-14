@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 {$, TextEditorView, View} = require 'atom-space-pen-views'
 {BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
+perm = require './permission'
 
 module.exports =
 class PackageGeneratorView extends View
@@ -17,8 +18,8 @@ class PackageGeneratorView extends View
         @subview 'pathEditor', new TextEditorView(mini: true)
         @div class: 'block', =>
           @div class: 'btn-group', =>
-            @button outlet: 'dpBtn', class: 'btn',click: 'setupDefaultPath', 'default path'
-            @button outlet: 'npBtn', class: 'btn',click: 'setupCustomPath', 'new path'
+            @button outlet: 'dpBtn', class: 'btn', click: 'setupDefaultPath', 'default path'
+            @button outlet: 'npBtn', class: 'btn', click: 'setupCustomPath', 'new path'
         @div class: 'error', outlet: 'error'
         @div class: 'message', outlet: 'message'
 
@@ -92,40 +93,21 @@ class PackageGeneratorView extends View
       process.env.ATOM_REPOS_HOME or
       path.join(fs.getHomeDirectory(), 'github')
 
-  userIsOwner: (stats) ->
-    owner = (process.getuid() is stats.uid)
-    owner && (stats.mode & 0o00200)
-
-  usersGroupCanWrite: (stats) ->
-    inGroup = (process.getgid() is stats.gid)
-    inGroup && (stats.mode & 0o00020)
-
-  anyoneCanWrite: (stats) ->
-    (stats.mode & 0o00002)
-
-  validPermission: (saveLocation) ->
-    stats = fs.statSync path.dirname(saveLocation)
-    if @userIsOwner(stats) or
-       @usersGroupCanWrite(stats) or
-       @anyoneCanWrite(stats)
-      return true
-    else
-      @error.text("You do not have the required privilege to save in #{path.dirname(saveLocation)}.")
+  validPackagePath: (finalPackageLocation) ->
+    if not @nameEditor
+      @error.text("You never input a group '#{saveLocation}'")
       @error.show()
       false
-
-  alreadyPackage: (saveLocation) ->
-    if fs.existsSync(saveLocation)
+    if fs.existsSync(finalPackageLocation)
       @error.text("Path already exists at '#{saveLocation}'")
       @error.show()
-      true
-    else
-      false
+      return false
+    if not perm.validPermission finalPackageLocation
+      @error.text("You do not have the right to save at #{finalPackageLocation}")
+      @error.show()
+      return false
 
-  validPackagePath: (finalPackageLocation) ->
-    return false if @alreadyPackage finalPackageLocation
-    return false if not @validPermission finalPackageLocation
-    true
+    true # yay! valid package
 
   initPackage: (packagePath, callback) ->
     @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
