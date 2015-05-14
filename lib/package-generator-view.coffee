@@ -3,13 +3,15 @@ _ = require 'underscore-plus'
 {$, TextEditorView, View} = require 'atom-space-pen-views'
 {BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
-perm = require './permission'
+{validPermission} = require './permission'
+{isStoredInDotAtom} = require "./validation"
 
 module.exports =
 class PackageGeneratorView extends View
   previouslyFocusedElement: null
   mode: null
   customDir: null
+  useDefaultPath: true
 
   @content: ->
     @div class: 'package-generator', =>
@@ -42,6 +44,7 @@ class PackageGeneratorView extends View
   # changes the panel view to use a custom path.
   setupCustomPath: () ->
     @swapBtnSelect @npBtn, @dpBtn
+    @pathEditor.setText @getPackagesDirectory()
     @pathEditor.show()
 
   # reverts the panel to the default view
@@ -78,6 +81,7 @@ class PackageGeneratorView extends View
 
   confirm: ->
     finalPackageLocation = @buildPackagePath()
+    console.log finalPackageLocation
     if @validPackagePath(finalPackageLocation)
       @createPackageFiles finalPackageLocation, =>
         atom.open(pathsToOpen: [finalPackageLocation])
@@ -86,7 +90,7 @@ class PackageGeneratorView extends View
   buildPackagePath: ->
     pkgName = _.dasherize @nameEditor.getText().trim()
     pkgPath = @pathEditor.getText().trim()
-    path.join(path.dirname(pkgPath), pkgName)
+    path.join(pkgPath, pkgName)
 
   getPackagesDirectory: ->
     atom.config.get('core.projectHome') or
@@ -94,46 +98,48 @@ class PackageGeneratorView extends View
       path.join(fs.getHomeDirectory(), 'github')
 
   validPackagePath: (finalPackageLocation) ->
-    if not @nameEditor
+    @makeSureDirectoryExists finalPackageLocation
+
+    if @nameEditor.length is 0
       @error.text("You never input a group '#{saveLocation}'")
       @error.show()
-      false
-    if fs.existsSync(finalPackageLocation)
+      return false
+    else if fs.existsSync(finalPackageLocation)
       @error.text("Path already exists at '#{saveLocation}'")
       @error.show()
       return false
-    if not perm.validPermission finalPackageLocation
+    else if not validPermission(finalPackageLocation)
       @error.text("You do not have the right to save at #{finalPackageLocation}")
       @error.show()
       return false
 
     true # yay! valid package
 
-  initPackage: (packagePath, callback) ->
-    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
+  makeSureDirectoryExists: (saveLocation) ->
+    dir = path.dirname saveLocation
+    if not fs.existsSync dir
+      create = confirm "#{dir} does not exist. Would you like to make a new one?", "No Folder Exist"
+      if create
+        fs.mkdirSync dir
+
+  initPackage: (saveLocation, callback) ->
+    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{saveLocation}"], callback)
 
   linkPackage: (packagePath, callback) ->
     args = ['link']
     args.push('--dev') if atom.config.get('package-generator.createInDevMode')
     args.push packagePath.toString()
 
-    @runCommand(atom.packages.getApmPath(), args, callback)
-
-  isStoredInDotAtom: (packagePath) ->
-    packagesPath = path.join(atom.getConfigDirPath(), 'packages', path.sep)
-    return true if packagePath.indexOf(packagesPath) is 0
-
-    devPackagesPath = path.join(atom.getConfigDirPath(), 'dev', 'packages', path.sep)
-    packagePath.indexOf(devPackagesPath) is 0
+    @runCommand(@apm(), args, callback)
 
   createPackageFiles: (saveLocation, callback) ->
-    packagePath = @buildPackagePath()
-    packagesDirectory = @getPackagesDirectory()
-
-    if @isStoredInDotAtom(packagePath)
-      @initPackage(packagePath, callback)
+    if isStoredInDotAtom(saveLocation)
+      @initPackage(saveLocation, callback)
     else
-      @initPackage packagePath, => @linkPackage(packagePath, callback)
+      @initPackage saveLocation, => @linkPackage(saveLocation, callback)
 
   runCommand: (command, args, exit) ->
     new BufferedProcess({command, args, exit})
+
+  apm: ->
+    atom.packages.getApmPath()

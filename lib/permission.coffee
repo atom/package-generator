@@ -20,7 +20,7 @@ validPermission= (saveLocation) ->
   else
     false
 
-exports = {
+module.exports = {
   userIsOwner
   usersGroupCanWrite
   anyoneCanWrite
