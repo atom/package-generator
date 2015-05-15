@@ -11,7 +11,6 @@ class PackageGeneratorView extends View
   previouslyFocusedElement: null
   mode: null
   customDir: null
-  useDefaultPath: true
 
   @content: ->
     @div class: 'package-generator', =>
@@ -87,8 +86,11 @@ class PackageGeneratorView extends View
         atom.open(pathsToOpen: [finalPackageLocation])
         @close()
 
+  sanitizeNameInput: (textField) ->
+    _.dasherize(textField.getText()).trim()
+
   buildPackagePath: ->
-    pkgName = _.dasherize @nameEditor.getText().trim()
+    pkgName = @sanitizeNameInput @nameEditor
     pkgPath = @pathEditor.getText().trim()
     path.join(pkgPath, pkgName)
 
@@ -97,20 +99,21 @@ class PackageGeneratorView extends View
       process.env.ATOM_REPOS_HOME or
       path.join(fs.getHomeDirectory(), 'github')
 
+  showError: (text) ->
+    @error.text text
+    @error.show()
+
   validPackagePath: (finalPackageLocation) ->
     @makeSureDirectoryExists finalPackageLocation
 
     if @nameEditor.length is 0
-      @error.text("You never input a group '#{saveLocation}'")
-      @error.show()
+      @showError "You never input a group '#{saveLocation}'"
       return false
     else if fs.existsSync(finalPackageLocation)
-      @error.text("Path already exists at '#{saveLocation}'")
-      @error.show()
+      @showError "Path already exists at '#{saveLocation}'"
       return false
     else if not validPermission(finalPackageLocation)
-      @error.text("You do not have the right to save at #{finalPackageLocation}")
-      @error.show()
+      @showError "You do not have the right to save at #{finalPackageLocation}"
       return false
 
     true # yay! valid package
@@ -130,7 +133,7 @@ class PackageGeneratorView extends View
     args.push('--dev') if atom.config.get('package-generator.createInDevMode')
     args.push packagePath.toString()
 
-    @runCommand(@apm(), args, callback)
+    @runCommand(atom.packages.getApmPath(), args, callback)
 
   createPackageFiles: (saveLocation, callback) ->
     if isStoredInDotAtom(saveLocation)
@@ -140,6 +143,3 @@ class PackageGeneratorView extends View
 
   runCommand: (command, args, exit) ->
     new BufferedProcess({command, args, exit})
-
-  apm: ->
-    atom.packages.getApmPath()

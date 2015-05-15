@@ -1,4 +1,5 @@
 fs = require 'fs-plus'
+path = require 'path'
 
 userIsOwner = (stats) ->
   owner = (process.getuid() is stats.uid)

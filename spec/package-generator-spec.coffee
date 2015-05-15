@@ -10,6 +10,7 @@ describe 'Package Generator', ->
   getEditorView = -> atom.views.getView(atom.workspace.getActiveTextEditor())
 
   beforeEach ->
+    spyOn(window, 'confirm').andReturn true
     waitsForPromise ->
       atom.workspace.open('sample.js')
 
@@ -25,12 +26,13 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageName = packageGeneratorView.miniEditor.getModel().getSelectedText()
-        expect(packageName).toEqual 'my-package'
+        packageName = packageGeneratorView.nameEditor.getModel().getText()
+        expect(packageName).toEqual 'my-awesome-package'
 
-        fullPath = packageGeneratorView.miniEditor.getModel().getText()
+        fullPath = packageGeneratorView.buildPackagePath()
         base = atom.config.get 'core.projectHome'
-        expect(fullPath).toEqual path.join(base, 'my-package')
+        console.log fullPath
+        expect(fullPath).toEqual path.join(base, 'my-awesome-package')
 
   describe "when package-generator:generate-syntax-theme is triggered", ->
     it "displays a miniEditor with correct text and selection", ->
@@ -41,12 +43,12 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        themeName = packageGeneratorView.miniEditor.getModel().getSelectedText()
-        expect(themeName).toEqual 'my-theme'
+        themeName = packageGeneratorView.nameEditor.getModel().getText()
+        expect(themeName).toEqual 'my-awesome-syntax'
 
-        fullPath = packageGeneratorView.miniEditor.getModel().getText()
+        fullPath = packageGeneratorView.buildPackagePath()
         base = atom.config.get 'core.projectHome'
-        expect(fullPath).toEqual path.join(base, 'my-theme-syntax')
+        expect(fullPath).toEqual path.join(base, 'my-awesome-syntax')
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
@@ -58,7 +60,7 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        expect(packageGeneratorView.miniEditor.element).toBe document.activeElement
+        expect(packageGeneratorView.nameEditor.element).toBe document.activeElement
 
         atom.commands.dispatch(packageGeneratorView.element, "core:cancel")
         expect(packageGeneratorView.panel.isVisible()).toBeFalsy()
@@ -80,7 +82,6 @@ describe 'Package Generator', ->
 
     it "forces the package's name to be lowercase with dashes", ->
       packageName = "CamelCaseIsForTheBirds"
-      packagePath = path.join(path.dirname(packagePath), packageName)
       atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
 
       waitsForPromise ->
@@ -88,13 +89,22 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageGeneratorView.miniEditor.setText(packagePath)
-        apmExecute = spyOn(packageGeneratorView, 'runCommand')
-        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+        createFolder = spyOn(packageGeneratorView, 'makeSureDirectoryExists').andCallFake (command, args, exit) ->
+        packageGeneratorView.nameEditor.setText(packageName)
+        packageGeneratorView.pathEditor.setText(packagePath)
+        expect(packageGeneratorView.buildPackagePath()).toEqual path.join(packagePath, "camel-case-is-for-the-birds")
 
-        expect(apmExecute).toHaveBeenCalled()
-        expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
-        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
+    describe 'when folder does not exist', ->
+      beforeEach ->
+        atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
+        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
+        createFolder = spyOn(packageGeneratorView, 'makeSureDirectoryExists').andCallFake (command, args, exit) ->
+
+
+        waitsForPromise ->
+          activationPromise
+
+
 
     describe 'when creating a package', ->
       beforeEach ->
@@ -109,7 +119,8 @@ describe 'Package Generator', ->
         generateOutside = (callback) ->
           packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
           expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
+          packageGeneratorView.nameEditor.setText(packageName)
+          packageGeneratorView.pathEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
           atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
@@ -141,9 +152,9 @@ describe 'Package Generator', ->
       describe "when the package is created inside the packages directory", ->
         it "calls `apm init`", ->
           packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-          spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
+          # spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
           expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
+          packageGeneratorView.pathEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
           atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
@@ -168,7 +179,9 @@ describe 'Package Generator', ->
         it "calls `apm init` and `apm link`", ->
           packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
           expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
+          # packageGeneratorView.miniEditor.setText(packagePath)
+          packageGeneratorView.nameEditor.setText(packageName)
+          packageGeneratorView.pathEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
           atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
@@ -186,9 +199,11 @@ describe 'Package Generator', ->
       describe "when the theme is created inside of the packages directory", ->
         it "calls `apm init`", ->
           packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-          spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
+          # spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
           expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
+          # packageGeneratorView.miniEditor.setText(packagePath)
+          packageGeneratorView.nameEditor.setText(packageName)
+          packageGeneratorView.pathEditor.setText(packagePath)
           apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
           atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
@@ -212,10 +227,13 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
+        packageName = path.basename(packagePath)
+        packagepath = path.dirname(packagePath)
 
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         expect(packageGeneratorView.error).not.toBeVisible()
-        packageGeneratorView.miniEditor.setText(packagePath)
+        packageGeneratorView.nameEditor.setText(packageName)
+        packageGeneratorView.pathEditor.setText(packagePath)
         atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
         expect(packageGeneratorView.hasParent()).toBeTruthy()
         expect(packageGeneratorView.error).toBeVisible()
@@ -228,7 +246,8 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageGeneratorView.miniEditor.setText(packagePath)
+        packageGeneratorView.nameEditor.setText(packageName)
+        packageGeneratorView.pathEditor.setText(packagePath)
         apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
           process.nextTick -> exit()
         loadPackage = spyOn(atom.packages, 'loadPackage')
