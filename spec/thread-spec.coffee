@@ -3,6 +3,7 @@
   threadL
   injectAtLast
   injectAtFirst
+  inject1B4L
 } = require '../lib/thread'
 
 sum=(a,b,c)->
@@ -14,7 +15,7 @@ getC = (a,b,c) ->
 describe 'Thread', ->
 
   describe 'threadF', ->
-    it 'checking the total', ->
+    it 'checking the value with simple sums and argument getters', ->
       total = threadF 0, (t) ->
         t sum, 1, 2
         t sum, 4, 5
@@ -34,10 +35,21 @@ describe 'Thread', ->
       expect(output).toEqual 8
 
 describe 'injectors', ->
-  describe 'At the first location', ->
-    it 'should insert 1 at the first place of [2 3 4]', ->
-      class Obj
-        constructor: () -> @value = 1
+  beforeEach ->
+    @OBJ = class Obj
+      constructor: () -> @value = 1
 
-      finalArgList = injectAtFirst.call(new Obj,[2,3,4])
+  describe 'injectAtFirst', ->
+    it 'should insert 1 at the first place of [2 3 4]', ->
+      finalArgList = injectAtFirst.call(new @OBJ,[2,3,4])
       expect(finalArgList).toEqual [1,2,3,4]
+
+  describe 'injectAtLast', ->
+    it 'should insert 1 at the last place of [2 3 4]', ->
+      finalArgList = injectAtLast.call(new @OBJ,[2,3,4])
+      expect(finalArgList).toEqual [2,3,4,1]
+
+  describe 'inject1B4L', ->
+    it 'should insert 1 at the second to last place of [2 3 4]', ->
+      finalArgList = inject1B4L.call(new @OBJ,[2,3,4])
+      expect(finalArgList).toEqual [2,3,1,4]
