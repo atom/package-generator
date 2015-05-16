@@ -3,6 +3,17 @@ _ = require 'underscore-plus'
 {$, TextEditorView, View} = require 'atom-space-pen-views'
 {BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
+{validPermission} = require './permission'
+{sanitizeNameInput} = require './sanitizers'
+{createPackageFiles} = require './runners'
+# {catchFalseWith} = require './thread'
+{
+  isStoredInDotAtom,
+  makeSureDirectoryExists
+  whenNoDirectory
+  alreadyExists
+  hasPermission
+} = require './validation'
 
 module.exports =
 class PackageGeneratorView extends View
@@ -11,19 +22,48 @@ class PackageGeneratorView extends View
 
   @content: ->
     @div class: 'package-generator', =>
-      @subview 'miniEditor', new TextEditorView(mini: true)
-      @div class: 'error', outlet: 'error'
-      @div class: 'message', outlet: 'message'
+      @div outlet: 'container', =>
+        @subview 'nameEditor', new TextEditorView(mini: true)
+        @subview 'pathEditor', new TextEditorView(mini: true)
+        @div class: 'block', =>
+          @div class: 'btn-group', =>
+            @button outlet: 'dpBtn', class: 'btn', click: 'setupDefaultPath', 'default path'
+            @button outlet: 'npBtn', class: 'btn', click: 'setupCustomPath', 'new path'
+        @div class: 'error', outlet: 'error'
+        @div class: 'message', outlet: 'message'
+        @progress max: 100, value: 0, class: 'progress', outlet: 'progress'
 
   initialize: ->
     @commandSubscription = atom.commands.add 'atom-workspace',
       'package-generator:generate-package': => @attach('package')
       'package-generator:generate-syntax-theme': => @attach('theme')
 
-    @miniEditor.on 'blur', => @close()
+    @container.on 'blur', => @close()
+
     atom.commands.add @element,
       'core:confirm': => @confirm()
       'core:cancel': => @close()
+
+  resetPanel: ->
+    @setupDefaultPath()
+    @progress.attr 'value', '0'
+    @error.text('')
+    @message.text('')
+
+  swapBtnSelect: (sel, nosel) ->
+    sel.addClass 'selected'
+    nosel.removeClass 'selected'
+    undefined
+
+  setupCustomPath: () ->
+    @swapBtnSelect @npBtn, @dpBtn
+    @pathEditor.setText @getPackagesDirectory()
+    @pathEditor.show()
+
+  setupDefaultPath: () ->
+    @swapBtnSelect @dpBtn, @npBtn
+    @pathEditor.setText @getPackagesDirectory()
+    @pathEditor.hide()
 
   destroy: ->
     @panel?.destroy()
@@ -35,75 +75,72 @@ class PackageGeneratorView extends View
     @panel.show()
     @message.text("Enter #{mode} path")
     if @mode == 'package'
-      @setPathText("my-package")
+      @setNameText("my-awesome-package")
     else
-      @setPathText("my-theme-syntax", [0, 8])
-    @miniEditor.focus()
-
-  setPathText: (placeholderName, rangeToSelect) ->
-    editor = @miniEditor.getModel()
-    rangeToSelect ?= [0, placeholderName.length]
-    packagesDirectory = @getPackagesDirectory()
-    editor.setText(path.join(packagesDirectory, placeholderName))
-    pathLength = editor.getText().length
-    endOfDirectoryIndex = pathLength - placeholderName.length
-    editor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
+      @setNameText("my-awesome-syntax")
+    @setupDefaultPath()
+    @nameEditor.focus()
 
   close: ->
     return unless @panel.isVisible()
+    @resetPanel()
     @panel.hide()
     @previouslyFocusedElement?.focus()
 
-  confirm: ->
-    if @validPackagePath()
-      @createPackageFiles =>
-        packagePath = @getPackagePath()
-        atom.open(pathsToOpen: [packagePath])
-        @close()
+  setNameText: (placeholderName) ->
+    nameEditor = @nameEditor.getModel()
+    nameEditor.setText(placeholderName)
+    nameEditor.setSelectedBufferRange([[0, 0], [0, placeholderName.length]])
 
-  getPackagePath: ->
-    packagePath = @miniEditor.getText().trim()
-    packageName = _.dasherize(path.basename(packagePath))
-    path.join(path.dirname(packagePath), packageName)
+  validInput: ->
+    if @nameEditor.getText().length is 0 or
+       @pathEditor.getText().length is 0
+      return false
+    else
+      return true
+
+  notCompleteInput: ->
+    @showError("You have not properly input the package generation form")
+
+  confirm: ->
+    finalPackageLocation = @buildPackagePath()
+    @progress.show()
+    @progress.attr 'value', '33'
+
+    return @notCompleteInput() if not @validInput()
+
+    if @validPackagePath(finalPackageLocation)
+      @progress.attr 'value', '66'
+      createPackageFiles @mode, finalPackageLocation, =>
+        @progress.attr 'value', '100'
+        atom.open(pathsToOpen: [finalPackageLocation])
+        @close()
+        atom.notifications.addSuccess("#{@pkgName} was created!")
+
+  buildPackagePath: ->
+    @pkgName = sanitizeNameInput @nameEditor
+    pkgPath = @pathEditor.getText().trim()
+    path.join(pkgPath, @pkgName)
+
+  showError: (text) ->
+    @error.text text
+    @error.show()
 
   getPackagesDirectory: ->
     atom.config.get('core.projectHome') or
       process.env.ATOM_REPOS_HOME or
       path.join(fs.getHomeDirectory(), 'github')
 
-  validPackagePath: ->
-    if fs.existsSync(@getPackagePath())
-      @error.text("Path already exists at '#{@getPackagePath()}'")
-      @error.show()
-      false
-    else
-      true
+  validPackagePath: (finalPackageLocation) ->
+    if not makeSureDirectoryExists finalPackageLocation
+      @close()
+      atom.notifications.addError("#{@pkgName} was not created successfully...")
+      return false
+    else if fs.existsSync(finalPackageLocation)
+      @showError "Path already exists at '#{finalPackageLocation}'"
+      return false
+    else if not validPermission(finalPackageLocation)
+      @showError "You do not have the right to save at #{finalPackageLocation}"
+      return false
 
-  initPackage: (packagePath, callback) ->
-    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
-
-  linkPackage: (packagePath, callback) ->
-    args = ['link']
-    args.push('--dev') if atom.config.get('package-generator.createInDevMode')
-    args.push packagePath.toString()
-
-    @runCommand(atom.packages.getApmPath(), args, callback)
-
-  isStoredInDotAtom: (packagePath) ->
-    packagesPath = path.join(atom.getConfigDirPath(), 'packages', path.sep)
-    return true if packagePath.indexOf(packagesPath) is 0
-
-    devPackagesPath = path.join(atom.getConfigDirPath(), 'dev', 'packages', path.sep)
-    packagePath.indexOf(devPackagesPath) is 0
-
-  createPackageFiles: (callback) ->
-    packagePath = @getPackagePath()
-    packagesDirectory = @getPackagesDirectory()
-
-    if @isStoredInDotAtom(packagePath)
-      @initPackage(packagePath, callback)
-    else
-      @initPackage packagePath, => @linkPackage(packagePath, callback)
-
-  runCommand: (command, args, exit) ->
-    new BufferedProcess({command, args, exit})
+    true # yay! valid package

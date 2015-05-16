@@ -1,5 +1,6 @@
 PackageGeneratorView = require './package-generator-view'
 
+
 module.exports =
   config:
     createInDevMode:
