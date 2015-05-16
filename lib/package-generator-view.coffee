@@ -6,7 +6,7 @@ fs = require 'fs-plus'
 {validPermission} = require './permission'
 {sanitizeNameInput} = require './sanitizers'
 {createPackageFiles} = require './runners'
-{thread} = require './thread'
+{catchFalseWith} = require './thread'
 {
   isStoredInDotAtom,
   makeSureDirectoryExists
@@ -132,17 +132,16 @@ class PackageGeneratorView extends View
       path.join(fs.getHomeDirectory(), 'github')
 
   validPackagePath: (finalPackageLocation) ->
-    p = @ # this
-    catchFalseWith finalPackageLocation, ->
-      @ whenNoDirectory, ->
-        p.close()
-        atom.notifications.addError("#{p.pkgName} was not created successfully...")
+    catchFalseWith finalPackageLocation, (t) =>
+      t whenNoDirectory, =>
+        @close()
+        atom.notifications.addError("#{@pkgName} was not created successfully...")
 
-      @ alreadyExists, ->
-        p.showError "Path already exists at '#{finalPackageLocation}'"
+      t alreadyExists, =>
+        @showError "Path already exists at '#{finalPackageLocation}'"
 
-      @ validPermission, ->
-        p.showError "You do not have the right to save at #{finalPackageLocation}"
+      t validPermission, =>
+        @showError "You do not have the right to save at #{finalPackageLocation}"
 
     # if not makeSureDirectoryExists finalPackageLocation
     #   @close()
