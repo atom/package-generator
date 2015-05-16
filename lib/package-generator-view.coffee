@@ -23,6 +23,7 @@ class PackageGeneratorView extends View
             @button outlet: 'npBtn', class: 'btn', click: 'setupCustomPath', 'new path'
         @div class: 'error', outlet: 'error'
         @div class: 'message', outlet: 'message'
+        @progress max: 100, value: 0, class: 'progress', outlet: 'progress'
 
   initialize: ->
     @commandSubscription = atom.commands.add 'atom-workspace',
@@ -34,6 +35,12 @@ class PackageGeneratorView extends View
     atom.commands.add @element,
       'core:confirm': => @confirm()
       'core:cancel': => @close()
+
+  resetPanel: ->
+    @setupDefaultPath()
+    @progress.attr 'value', '0'
+    @error.text('')
+    @message.text('')
 
   swapBtnSelect: (sel, nosel) ->
     sel.addClass 'selected'
@@ -70,6 +77,7 @@ class PackageGeneratorView extends View
 
   close: ->
     return unless @panel.isVisible()
+    @resetPanel()
     @panel.hide()
     @previouslyFocusedElement?.focus()
 
@@ -80,19 +88,24 @@ class PackageGeneratorView extends View
 
   confirm: ->
     finalPackageLocation = @buildPackagePath()
+    @progress.show()
+    @progress.attr 'value', '33'
     console.log finalPackageLocation
     if @validPackagePath(finalPackageLocation)
+      @progress.attr 'value', '66'
       @createPackageFiles finalPackageLocation, =>
+        @progress.attr 'value', '100'
         atom.open(pathsToOpen: [finalPackageLocation])
         @close()
+        atom.notifications.addSuccess("#{@pkgName} was created!")
 
   sanitizeNameInput: (textField) ->
     _.dasherize(textField.getText()).trim()
 
   buildPackagePath: ->
-    pkgName = @sanitizeNameInput @nameEditor
+    @pkgName = @sanitizeNameInput @nameEditor
     pkgPath = @pathEditor.getText().trim()
-    path.join(pkgPath, pkgName)
+    path.join(pkgPath, @pkgName)
 
   getPackagesDirectory: ->
     atom.config.get('core.projectHome') or
@@ -104,8 +117,10 @@ class PackageGeneratorView extends View
     @error.show()
 
   validPackagePath: (finalPackageLocation) ->
-    return false if not @makeSureDirectoryExists finalPackageLocation
-
+    if not @makeSureDirectoryExists finalPackageLocation
+      @close()
+      atom.notifications.addError("#{@pkgName} was not created successfully...")
+      return false
     if @nameEditor.length is 0
       @showError "You never input a group '#{finalPackageLocation}'"
       return false
