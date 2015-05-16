@@ -107,10 +107,10 @@ class PackageGeneratorView extends View
     @makeSureDirectoryExists finalPackageLocation
 
     if @nameEditor.length is 0
-      @showError "You never input a group '#{saveLocation}'"
+      @showError "You never input a group '#{finalPackageLocation}'"
       return false
     else if fs.existsSync(finalPackageLocation)
-      @showError "Path already exists at '#{saveLocation}'"
+      @showError "Path already exists at '#{finalPackageLocation}'"
       return false
     else if not validPermission(finalPackageLocation)
       @showError "You do not have the right to save at #{finalPackageLocation}"
