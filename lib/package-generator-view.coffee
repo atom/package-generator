@@ -104,7 +104,7 @@ class PackageGeneratorView extends View
     @error.show()
 
   validPackagePath: (finalPackageLocation) ->
-    @makeSureDirectoryExists finalPackageLocation
+    return false if not @makeSureDirectoryExists finalPackageLocation
 
     if @nameEditor.length is 0
       @showError "You never input a group '#{finalPackageLocation}'"
@@ -121,9 +121,14 @@ class PackageGeneratorView extends View
   makeSureDirectoryExists: (saveLocation) ->
     dir = path.dirname saveLocation
     if not fs.existsSync dir
-      create = confirm "#{dir} does not exist. Would you like to make a new one?", "No Folder Exist"
+      create = confirm "#{dir} does not exist. Would you like to make a new one?", "Folder doesn't exist"
       if create
         fs.mkdirSync dir
+        return true
+      else
+        return false
+
+    return true
 
   initPackage: (saveLocation, callback) ->
     @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{saveLocation}"], callback)
