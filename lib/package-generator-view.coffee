@@ -6,7 +6,14 @@ fs = require 'fs-plus'
 {validPermission} = require './permission'
 {sanitizeNameInput} = require './sanitizers'
 {createPackageFiles} = require './runners'
-{isStoredInDotAtom,makeSureDirectoryExists} = require './validation'
+{thread} = require './thread'
+{
+  isStoredInDotAtom,
+  makeSureDirectoryExists
+  whenNoDirectory
+  alreadyExists
+  validPermission
+} = require './validation'
 
 module.exports =
 class PackageGeneratorView extends View
@@ -125,15 +132,27 @@ class PackageGeneratorView extends View
       path.join(fs.getHomeDirectory(), 'github')
 
   validPackagePath: (finalPackageLocation) ->
-    if not makeSureDirectoryExists finalPackageLocation
-      @close()
-      atom.notifications.addError("#{@pkgName} was not created successfully...")
-      return false
-    else if fs.existsSync(finalPackageLocation)
-      @showError "Path already exists at '#{finalPackageLocation}'"
-      return false
-    else if not validPermission(finalPackageLocation)
-      @showError "You do not have the right to save at #{finalPackageLocation}"
-      return false
+    p = @ # this
+    catchFalseWith finalPackageLocation, ->
+      @ whenNoDirectory, ->
+        p.close()
+        atom.notifications.addError("#{p.pkgName} was not created successfully...")
 
-    true # yay! valid package
+      @ alreadyExists, ->
+        p.showError "Path already exists at '#{finalPackageLocation}'"
+
+      @ validPermission, ->
+        p.showError "You do not have the right to save at #{finalPackageLocation}"
+
+    # if not makeSureDirectoryExists finalPackageLocation
+    #   @close()
+    #   atom.notifications.addError("#{@pkgName} was not created successfully...")
+    #   return false
+    # else if fs.existsSync(finalPackageLocation)
+    #   @showError "Path already exists at '#{finalPackageLocation}'"
+    #   return false
+    # else if not validPermission(finalPackageLocation)
+    #   @showError "You do not have the right to save at #{finalPackageLocation}"
+    #   return false
+    #
+    # true # yay! valid package

@@ -21,7 +21,28 @@ makeSureDirectoryExists = (saveLocation) ->
 
   return true
 
+whenNoDirectory = (finalPackageLocation, callback) ->
+  if not makeSureDirectoryExists finalPackageLocation
+    callback()
+    return false
+  true
+
+alreadyExists = (finalPackageLocation, callback) ->
+  if fs.existsSync(finalPackageLocation)
+    callback()
+    return false
+  true
+
+validPermission = (finalPackageLocation, callback) ->
+  if not validPermission(finalPackageLocation)
+    @showError "You do not have the right to save at #{finalPackageLocation}"
+    return false
+  true
+
 module.exports = {
+  whenNoDirectory
+  alreadyExists
+  validPermission
   isStoredInDotAtom
   makeSureDirectoryExists
 }
