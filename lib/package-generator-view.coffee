@@ -4,13 +4,14 @@ _ = require 'underscore-plus'
 {BufferedProcess} = require 'atom'
 fs = require 'fs-plus'
 {validPermission} = require './permission'
-{isStoredInDotAtom} = require "./validation"
+{sanitizeNameInput} = require './sanitizers'
+{createPackageFiles} = require './runners'
+{isStoredInDotAtom,makeSureDirectoryExists} = require './validation'
 
 module.exports =
 class PackageGeneratorView extends View
   previouslyFocusedElement: null
   mode: null
-  customDir: null
 
   @content: ->
     @div class: 'package-generator', =>
@@ -47,13 +48,11 @@ class PackageGeneratorView extends View
     nosel.removeClass 'selected'
     undefined
 
-  # changes the panel view to use a custom path.
   setupCustomPath: () ->
     @swapBtnSelect @npBtn, @dpBtn
     @pathEditor.setText @getPackagesDirectory()
     @pathEditor.show()
 
-  # reverts the panel to the default view
   setupDefaultPath: () ->
     @swapBtnSelect @dpBtn, @npBtn
     @pathEditor.setText @getPackagesDirectory()
@@ -86,43 +85,49 @@ class PackageGeneratorView extends View
     nameEditor.setText(placeholderName)
     nameEditor.setSelectedBufferRange([[0, 0], [0, placeholderName.length]])
 
+  validInput: ->
+    if @nameEditor.getText().length is 0 or
+       @pathEditor.getText().length is 0
+      return false
+    else
+      return true
+
+  notCompleteInput: ->
+    @showError("You have not properly input the package generation form")
+
   confirm: ->
     finalPackageLocation = @buildPackagePath()
     @progress.show()
     @progress.attr 'value', '33'
-    console.log finalPackageLocation
+
+    return @notCompleteInput() if not @validInput()
+
     if @validPackagePath(finalPackageLocation)
       @progress.attr 'value', '66'
-      @createPackageFiles finalPackageLocation, =>
+      createPackageFiles @mode, finalPackageLocation, =>
         @progress.attr 'value', '100'
         atom.open(pathsToOpen: [finalPackageLocation])
         @close()
         atom.notifications.addSuccess("#{@pkgName} was created!")
 
-  sanitizeNameInput: (textField) ->
-    _.dasherize(textField.getText()).trim()
-
   buildPackagePath: ->
-    @pkgName = @sanitizeNameInput @nameEditor
+    @pkgName = sanitizeNameInput @nameEditor
     pkgPath = @pathEditor.getText().trim()
     path.join(pkgPath, @pkgName)
+
+  showError: (text) ->
+    @error.text text
+    @error.show()
 
   getPackagesDirectory: ->
     atom.config.get('core.projectHome') or
       process.env.ATOM_REPOS_HOME or
       path.join(fs.getHomeDirectory(), 'github')
 
-  showError: (text) ->
-    @error.text text
-    @error.show()
-
   validPackagePath: (finalPackageLocation) ->
-    if not @makeSureDirectoryExists finalPackageLocation
+    if not makeSureDirectoryExists finalPackageLocation
       @close()
       atom.notifications.addError("#{@pkgName} was not created successfully...")
-      return false
-    if @nameEditor.length is 0
-      @showError "You never input a group '#{finalPackageLocation}'"
       return false
     else if fs.existsSync(finalPackageLocation)
       @showError "Path already exists at '#{finalPackageLocation}'"
@@ -132,34 +137,3 @@ class PackageGeneratorView extends View
       return false
 
     true # yay! valid package
-
-  makeSureDirectoryExists: (saveLocation) ->
-    dir = path.dirname saveLocation
-    if not fs.existsSync dir
-      create = confirm "#{dir} does not exist. Would you like to make a new one?", "Folder doesn't exist"
-      if create
-        fs.mkdirSync dir
-        return true
-      else
-        return false
-
-    return true
-
-  initPackage: (saveLocation, callback) ->
-    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{saveLocation}"], callback)
-
-  linkPackage: (packagePath, callback) ->
-    args = ['link']
-    args.push('--dev') if atom.config.get('package-generator.createInDevMode')
-    args.push packagePath.toString()
-
-    @runCommand(atom.packages.getApmPath(), args, callback)
-
-  createPackageFiles: (saveLocation, callback) ->
-    if isStoredInDotAtom(saveLocation)
-      @initPackage(saveLocation, callback)
-    else
-      @initPackage saveLocation, => @linkPackage(saveLocation, callback)
-
-  runCommand: (command, args, exit) ->
-    new BufferedProcess({command, args, exit})
