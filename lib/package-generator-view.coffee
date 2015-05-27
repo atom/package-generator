@@ -34,7 +34,7 @@ class PackageGeneratorView extends View
     @previouslyFocusedElement = $(document.activeElement)
     @panel.show()
     @message.text("Enter #{mode} path")
-    if @mode == 'package'
+    if @mode is 'package'
       @setPathText("my-package")
     else
       @setPathText("my-theme-syntax", [0, 8])
