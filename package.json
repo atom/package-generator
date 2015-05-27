@@ -19,5 +19,8 @@
   "repository": "https://github.com/atom/package-generator",
   "engines": {
     "atom": "*"
+  },
+  "devDependencies": {
+    "coffeelint": "^1.9.7"
   }
 }
