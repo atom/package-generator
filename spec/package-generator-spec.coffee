@@ -96,6 +96,23 @@ describe 'Package Generator', ->
         expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
         expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
 
+    it "normalizes the package's path", ->
+      packagePath = path.join("~", "the-package")
+      atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
+
+      waitsForPromise ->
+        activationPromise
+
+      runs ->
+        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        apmExecute = spyOn(packageGeneratorView, 'runCommand')
+        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+
+        expect(apmExecute).toHaveBeenCalled()
+        expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
+        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{fs.normalize(packagePath)}"]
+
     describe 'when creating a package', ->
       beforeEach ->
         atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
