@@ -19,6 +19,7 @@ class PackageGeneratorView extends View
     @commandSubscription = atom.commands.add 'atom-workspace',
       'package-generator:generate-package': => @attach('package')
       'package-generator:generate-syntax-theme': => @attach('theme')
+      'package-generator:generate-ui-theme': => @attach('ui-theme')
 
     @miniEditor.on 'blur', => @close()
     atom.commands.add @element,
@@ -36,8 +37,11 @@ class PackageGeneratorView extends View
     @message.text("Enter #{mode} path")
     if @mode is 'package'
       @setPathText("my-package")
-    else
+    else if @mode is 'theme'
       @setPathText("my-theme-syntax", [0, 8])
+    else
+      @setPathText("my-theme-ui", [0, 8])
+
     @miniEditor.focus()
 
   setPathText: (placeholderName, rangeToSelect) ->
