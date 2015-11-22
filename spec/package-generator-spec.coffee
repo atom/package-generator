@@ -1,6 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 temp = require 'temp'
+_ = require 'underscore-plus'
 {$} = require 'atom-space-pen-views'
 
 describe 'Package Generator', ->
@@ -67,6 +68,10 @@ describe 'Package Generator', ->
   describe "when a package is generated", ->
     [packageName, packagePath, packageRoot] = []
 
+    packageInitCommandFor = (path, syntax) ->
+      syntax ||= atom.config.get('package-generator.packageSyntax')
+      ['init', '--package', path, '--syntax', syntax]
+
     beforeEach ->
       spyOn(atom, "open")
 
@@ -94,7 +99,7 @@ describe 'Package Generator', ->
 
         expect(apmExecute).toHaveBeenCalled()
         expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
-        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"]
+        expect(apmExecute.mostRecentCall.args[1]).toEqual packageInitCommandFor "#{path.join(path.dirname(packagePath), "camel-case-is-for-the-birds")}"
 
     it "normalizes the package's path", ->
       packagePath = path.join("~", "the-package")
@@ -111,9 +116,26 @@ describe 'Package Generator', ->
 
         expect(apmExecute).toHaveBeenCalled()
         expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
-        expect(apmExecute.mostRecentCall.args[1]).toEqual ['init', '--package', "#{fs.normalize(packagePath)}"]
+        expect(apmExecute.mostRecentCall.args[1]).toEqual packageInitCommandFor "#{fs.normalize(packagePath)}"
 
     describe 'when creating a package', ->
+      [apmExecute] = []
+
+      generatePackage = (insidePackagesDirectory, callback) ->
+        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
+        spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn insidePackagesDirectory
+        expect(packageGeneratorView.hasParent()).toBeTruthy()
+        packageGeneratorView.miniEditor.setText(packagePath)
+        apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+          process.nextTick -> exit()
+        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+        waitsFor ->
+          atom.open.callCount is 1
+        runs callback
+
+      generateOutside = _.partial generatePackage, false
+      generateInside = _.partial generatePackage, true
+
       beforeEach ->
         atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
 
@@ -121,26 +143,13 @@ describe 'Package Generator', ->
           activationPromise
 
       describe "when the package is created outside of the packages directory", ->
-        [apmExecute] = []
-
-        generateOutside = (callback) ->
-          packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-          expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
-          apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
-            process.nextTick -> exit()
-          atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
-          waitsFor ->
-            atom.open.callCount is 1
-
-          runs callback
 
         it "calls `apm init` and `apm link`", ->
           atom.config.set 'package-generator.createInDevMode', false
 
           generateOutside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
-            expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
+            expect(apmExecute.argsForCall[0][1]).toEqual packageInitCommandFor "#{packagePath}"
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
@@ -150,29 +159,32 @@ describe 'Package Generator', ->
 
           generateOutside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
-            expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
+            expect(apmExecute.argsForCall[0][1]).toEqual packageInitCommandFor "#{packagePath}"
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', '--dev', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
       describe "when the package is created inside the packages directory", ->
         it "calls `apm init`", ->
-          packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-          spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
-          expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
-          apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
-            process.nextTick -> exit()
-          atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
-
-          waitsFor ->
-            atom.open.callCount
-
-          runs ->
+          generateInside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
-            expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
+            expect(apmExecute.argsForCall[0][1]).toEqual packageInitCommandFor "#{packagePath}"
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
             expect(apmExecute.argsForCall[1]).toBeUndefined()
+
+      describe "when the package is a coffeescript package", ->
+        it "calls `apm init` with the correct syntax option", ->
+          atom.config.set 'package-generator.packageSyntax', 'coffeescript'
+          generateInside ->
+            expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[0][1]).toEqual packageInitCommandFor "#{packagePath}", 'coffeescript'
+
+      describe "when the package is a javascript package", ->
+        it "calls `apm init` with the correct syntax option", ->
+          atom.config.set 'package-generator.packageSyntax', 'javascript'
+          generateInside ->
+            expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[0][1]).toEqual packageInitCommandFor "#{packagePath}", 'javascript'
 
     describe 'when creating a theme', ->
       beforeEach ->
