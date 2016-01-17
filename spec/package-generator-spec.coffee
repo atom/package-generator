@@ -137,6 +137,7 @@ describe 'Package Generator', ->
 
         it "calls `apm init` and `apm link`", ->
           atom.config.set 'package-generator.createInDevMode', false
+          atom.config.set 'package-generator.packageParams', ''
 
           generateOutside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
@@ -147,12 +148,24 @@ describe 'Package Generator', ->
 
         it "calls `apm init` and `apm link --dev`", ->
           atom.config.set 'package-generator.createInDevMode', true
+          atom.config.set 'package-generator.packageParams', ''
 
           generateOutside ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}"]
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', '--dev', "#{packagePath}"]
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
+
+        it "calls `apm init --template /home/test` and `apm link`", ->
+          atom.config.set 'package-generator.createInDevMode', false
+          atom.config.set 'package-generator.packageParams', '--template /home/test'
+
+          generateOutside ->
+            expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--package', "#{packagePath}", '--template', '/home/test']
+            expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
 
       describe "when the package is created inside the packages directory", ->
@@ -183,6 +196,7 @@ describe 'Package Generator', ->
 
       describe "when the theme is created outside of the packages directory", ->
         it "calls `apm init` and `apm link`", ->
+          atom.config.set 'package-generator.themeParams', ''
           packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
           expect(packageGeneratorView.hasParent()).toBeTruthy()
           packageGeneratorView.miniEditor.setText(packagePath)
@@ -196,6 +210,25 @@ describe 'Package Generator', ->
           runs ->
             expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--theme', "#{packagePath}"]
+            expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
+            expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath
+
+        it "calls `apm init --template /home/test` and `apm link`", ->
+          atom.config.set 'package-generator.themeParams', '--template /home/test'
+          packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
+          expect(packageGeneratorView.hasParent()).toBeTruthy()
+          packageGeneratorView.miniEditor.setText(packagePath)
+          apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+            process.nextTick -> exit()
+          atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+
+          waitsFor ->
+            atom.open.callCount is 1
+
+          runs ->
+            expect(apmExecute.argsForCall[0][0]).toBe atom.packages.getApmPath()
+            expect(apmExecute.argsForCall[0][1]).toEqual ['init', '--theme', "#{packagePath}", "--template", "/home/test"]
             expect(apmExecute.argsForCall[1][0]).toBe atom.packages.getApmPath()
             expect(apmExecute.argsForCall[1][1]).toEqual ['link', "#{packagePath}"]
             expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe packagePath

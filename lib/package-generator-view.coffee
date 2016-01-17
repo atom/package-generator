@@ -80,7 +80,16 @@ class PackageGeneratorView extends View
       true
 
   initPackage: (packagePath, callback) ->
-    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
+    args = ['init', "--#{@mode}", "#{packagePath}"]
+    params = @initParameters()
+    args = args.concat params.split(" ") if params.trim()
+    @runCommand(atom.packages.getApmPath(), args, callback)
+
+  initParameters: ->
+    if @mode is 'package'
+      return atom.config.get('package-generator.packageParams')
+    else
+      return atom.config.get('package-generator.themeParams')
 
   linkPackage: (packagePath, callback) ->
     args = ['link']
