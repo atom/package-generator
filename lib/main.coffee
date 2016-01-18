@@ -10,7 +10,7 @@ module.exports =
       title: 'Package parameters'
       default: ''
       type: 'string'
-      description: 'Parameters related to apm init command for packages (```--syntax <javascript-or-coffeescript>\```, ```-c <Path or URL to Textmate bundle>``` or ```--template <Path to template>```)'
+      description: 'Parameters related to apm init command for packages (```--syntax <javascript-or-coffeescript>```, ```-c <Path or URL to Textmate bundle>``` or ```--template <Path to template>```)'
     themeParams:
       title: 'Theme parameters'
       default: ''
