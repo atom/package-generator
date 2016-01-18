@@ -10,12 +10,12 @@ module.exports =
       title: 'Package parameters'
       default: ''
       type: 'string'
-      description: 'extra parameters related to apm init command package section'
+      description: 'Parameters related to apm init command for packages (```--syntax <javascript-or-coffeescript>\```, ```-c <Path or URL to Textmate bundle>``` or ```--template <Path to template>```)'
     themeParams:
       title: 'Theme parameters'
       default: ''
       type: 'string'
-      description: 'extra parameters related to apm init command theme section'
+      description: 'Parameters related to apm init command for themes (```-c <Path or URL to Textmate bundle>``` or ```--template <Path to template>```)'
 
   activate: ->
     @view = new PackageGeneratorView()
