@@ -1,6 +1,6 @@
 {
   "name": "package-generator",
-  "version": "0.41.1",
+  "version": "1.0.0",
   "main": "./lib/main",
   "description": "Generates and opens a new sample package or syntax theme.",
   "license": "MIT",
@@ -32,7 +32,10 @@
     "packageSyntax": {
       "default": "javascript",
       "type": "string",
-      "enum": ["coffeescript", "javascript"],
+      "enum": [
+        "coffeescript",
+        "javascript"
+      ],
       "description": "The syntax to generate packages with."
     }
   }
