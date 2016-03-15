@@ -30,7 +30,7 @@
       "description": "When disabled, generated packages are linked into Atom in both normal mode and dev mode. When enabled, generated packages are linked into Atom only in dev mode."
     },
     "packageSyntax": {
-      "default": "coffeescript",
+      "default": "javascript",
       "type": "string",
       "enum": ["coffeescript", "javascript"],
       "description": "The syntax to generate packages with."
