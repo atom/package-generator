@@ -34,7 +34,7 @@ class PackageGeneratorView extends View
     @previouslyFocusedElement = $(document.activeElement)
     @panel.show()
     @message.text("Enter #{mode} path")
-    if @mode is 'package'
+    if @isInPackageMode()
       @setPathText("my-package")
     else
       @setPathText("my-theme-syntax", [0, 8])
@@ -79,8 +79,16 @@ class PackageGeneratorView extends View
     else
       true
 
+  getInitOptions: (packagePath) ->
+    options = ["--#{@mode}", packagePath]
+    if @isInPackageMode()
+      [options..., '--syntax', atom.config.get('package-generator.packageSyntax')]
+    else
+      options
+
   initPackage: (packagePath, callback) ->
-    @runCommand(atom.packages.getApmPath(), ['init', "--#{@mode}", "#{packagePath}"], callback)
+    command = ['init', @getInitOptions(packagePath)...]
+    @runCommand(atom.packages.getApmPath(), command, callback)
 
   linkPackage: (packagePath, callback) ->
     args = ['link']
@@ -88,6 +96,9 @@ class PackageGeneratorView extends View
     args.push packagePath.toString()
 
     @runCommand(atom.packages.getApmPath(), args, callback)
+
+  isInPackageMode: ->
+    @mode is 'package'
 
   isStoredInDotAtom: (packagePath) ->
     packagesPath = path.join(atom.getConfigDirPath(), 'packages', path.sep)
