@@ -33,7 +33,7 @@ class PackageGeneratorView extends View
     @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
     @previouslyFocusedElement = $(document.activeElement)
     @panel.show()
-    @message.text("Enter #{mode} path")
+    @message.text("Enter #{@mode} path")
     if @isInPackageMode()
       @setPathText("my-package")
     else
@@ -109,7 +109,6 @@ class PackageGeneratorView extends View
 
   createPackageFiles: (callback) ->
     packagePath = @getPackagePath()
-    packagesDirectory = @getPackagesDirectory()
 
     if @isStoredInDotAtom(packagePath)
       @initPackage(packagePath, callback)

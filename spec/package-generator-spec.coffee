@@ -258,9 +258,9 @@ describe 'Package Generator', ->
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
         packageGeneratorView.miniEditor.setText(packagePath)
-        apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+        spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
           process.nextTick -> exit()
-        loadPackage = spyOn(atom.packages, 'loadPackage')
+        spyOn(atom.packages, 'loadPackage')
         atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
 
       waitsFor ->
