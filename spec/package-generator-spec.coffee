@@ -59,11 +59,11 @@ describe 'Package Generator', ->
 
       runs ->
         packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        expect(packageGeneratorView.miniEditor.element).toBe document.activeElement
+        expect(document.activeElement.closest('atom-text-editor')).toBe(packageGeneratorView.miniEditor.element)
 
         atom.commands.dispatch(packageGeneratorView.element, "core:cancel")
         expect(packageGeneratorView.panel.isVisible()).toBeFalsy()
-        expect(getEditorView()).toBe document.activeElement
+        expect(document.activeElement.closest('atom-text-editor')).toBe(getEditorView())
 
   describe "when a package is generated", ->
     [packageName, packagePath, packageRoot] = []
