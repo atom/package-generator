@@ -5,6 +5,7 @@
     'submenu': [
       { 'label': 'Generate Atom Package', 'command': 'package-generator:generate-package' }
       { 'label': 'Generate Atom Syntax Theme', 'command': 'package-generator:generate-syntax-theme' }
+      { 'label': 'Generate Atom UI Theme', 'command': 'package-generator:generate-ui-theme' }
     ]
   ]
 ]
