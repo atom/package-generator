@@ -83,7 +83,6 @@ class PackageGeneratorView
 
   validPackagePath: ->
     if fs.existsSync(@getPackagePath())
-      debugger
       @error.textContent = "Path already exists at '#{@getPackagePath()}'"
       @error.style.display = 'block'
       false
