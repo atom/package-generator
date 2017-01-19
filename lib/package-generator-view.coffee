@@ -1,53 +1,63 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{$, TextEditorView, View} = require 'atom-space-pen-views'
-{BufferedProcess} = require 'atom'
+{TextEditor, BufferedProcess, CompositeDisposable, Disposable} = require 'atom'
 fs = require 'fs-plus'
 
 module.exports =
-class PackageGeneratorView extends View
+class PackageGeneratorView
   previouslyFocusedElement: null
   mode: null
 
-  @content: ->
-    @div class: 'package-generator', =>
-      @subview 'miniEditor', new TextEditorView(mini: true)
-      @div class: 'error', outlet: 'error'
-      @div class: 'message', outlet: 'message'
+  constructor: ->
+    @disposables = new CompositeDisposable
 
-  initialize: ->
-    @commandSubscription = atom.commands.add 'atom-workspace',
+    @element = document.createElement('div')
+    @element.classList.add('package-generator')
+
+    @miniEditor = new TextEditor({mini: true})
+    @element.appendChild(@miniEditor.element)
+
+    @error = document.createElement('div')
+    @error.classList.add('error')
+    @element.appendChild(@error)
+
+    @message = document.createElement('div')
+    @message.classList.add('message')
+    @element.appendChild(@message)
+
+    @disposables.add atom.commands.add 'atom-workspace',
       'package-generator:generate-package': => @attach('package')
       'package-generator:generate-syntax-theme': => @attach('theme')
 
-    @miniEditor.on 'blur', => @close()
-    atom.commands.add @element,
+    blurHandler = => @close()
+    @miniEditor.element.addEventListener('blur', blurHandler)
+    @disposables.add(new Disposable(=> @miniEditor.element.removeEventListener('blur', blurHandler)))
+    @disposables.add atom.commands.add @element,
       'core:confirm': => @confirm()
       'core:cancel': => @close()
 
   destroy: ->
     @panel?.destroy()
-    @commandSubscription.dispose()
+    @disposables.dispose()
 
   attach: (@mode) ->
-    @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
-    @previouslyFocusedElement = $(document.activeElement)
+    @panel ?= atom.workspace.addModalPanel({item: this, visible: false})
+    @previouslyFocusedElement = document.activeElement
     @panel.show()
-    @message.text("Enter #{@mode} path")
+    @message.textContent = "Enter #{@mode} path"
     if @isInPackageMode()
       @setPathText("my-package")
     else
       @setPathText("my-theme-syntax", [0, 8])
-    @miniEditor.focus()
+    @miniEditor.element.focus()
 
   setPathText: (placeholderName, rangeToSelect) ->
-    editor = @miniEditor.getModel()
     rangeToSelect ?= [0, placeholderName.length]
     packagesDirectory = @getPackagesDirectory()
-    editor.setText(path.join(packagesDirectory, placeholderName))
-    pathLength = editor.getText().length
+    @miniEditor.setText(path.join(packagesDirectory, placeholderName))
+    pathLength = @miniEditor.getText().length
     endOfDirectoryIndex = pathLength - placeholderName.length
-    editor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
+    @miniEditor.setSelectedBufferRange([[0, endOfDirectoryIndex + rangeToSelect[0]], [0, endOfDirectoryIndex + rangeToSelect[1]]])
 
   close: ->
     return unless @panel.isVisible()
@@ -73,8 +83,8 @@ class PackageGeneratorView extends View
 
   validPackagePath: ->
     if fs.existsSync(@getPackagePath())
-      @error.text("Path already exists at '#{@getPackagePath()}'")
-      @error.show()
+      @error.textContent = "Path already exists at '#{@getPackagePath()}'"
+      @error.style.display = 'block'
       false
     else
       true

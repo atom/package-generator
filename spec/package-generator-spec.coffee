@@ -2,7 +2,7 @@ path = require 'path'
 fs = require 'fs-plus'
 temp = require 'temp'
 _ = require 'underscore-plus'
-{$} = require 'atom-space-pen-views'
+PackageGeneratorView = require '../lib/package-generator-view'
 
 describe 'Package Generator', ->
   [activationPromise] = []
@@ -25,13 +25,11 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageName = packageGeneratorView.miniEditor.getModel().getSelectedText()
-        expect(packageName).toEqual 'my-package'
-
-        fullPath = packageGeneratorView.miniEditor.getModel().getText()
+        packageGeneratorView = getWorkspaceView().querySelector(".package-generator")
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        expect(editor.getSelectedText()).toEqual 'my-package'
         base = atom.config.get 'core.projectHome'
-        expect(fullPath).toEqual path.join(base, 'my-package')
+        expect(editor.getText()).toEqual path.join(base, 'my-package')
 
   describe "when package-generator:generate-syntax-theme is triggered", ->
     it "displays a miniEditor with correct text and selection", ->
@@ -41,13 +39,11 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        themeName = packageGeneratorView.miniEditor.getModel().getSelectedText()
-        expect(themeName).toEqual 'my-theme'
-
-        fullPath = packageGeneratorView.miniEditor.getModel().getText()
+        packageGeneratorView = getWorkspaceView().querySelector(".package-generator")
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        expect(editor.getSelectedText()).toEqual 'my-theme'
         base = atom.config.get 'core.projectHome'
-        expect(fullPath).toEqual path.join(base, 'my-theme-syntax')
+        expect(editor.getText()).toEqual path.join(base, 'my-theme-syntax')
 
   describe "when core:cancel is triggered", ->
     it "detaches from the DOM and focuses the the previously focused element", ->
@@ -58,11 +54,11 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        expect(document.activeElement.closest('atom-text-editor')).toBe(packageGeneratorView.miniEditor.element)
+        packageGeneratorView = getWorkspaceView().querySelector(".package-generator")
+        expect(document.activeElement.closest('atom-text-editor')).toBe(packageGeneratorView.querySelector('atom-text-editor'))
 
-        atom.commands.dispatch(packageGeneratorView.element, "core:cancel")
-        expect(packageGeneratorView.panel.isVisible()).toBeFalsy()
+        atom.commands.dispatch(packageGeneratorView, "core:cancel")
+        expect(atom.workspace.getModalPanels()[0].isVisible()).toBe(false)
         expect(document.activeElement.closest('atom-text-editor')).toBe(getEditorView())
 
   describe "when a package is generated", ->
@@ -92,10 +88,11 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageGeneratorView.miniEditor.setText(packagePath)
-        apmExecute = spyOn(packageGeneratorView, 'runCommand')
-        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+        packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        editor.setText(packagePath)
+        apmExecute = spyOn(PackageGeneratorView::, 'runCommand')
+        atom.commands.dispatch(packageGeneratorView, "core:confirm")
 
         expect(apmExecute).toHaveBeenCalled()
         expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
@@ -109,10 +106,11 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageGeneratorView.miniEditor.setText(packagePath)
-        apmExecute = spyOn(packageGeneratorView, 'runCommand')
-        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+        packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        editor.setText(packagePath)
+        apmExecute = spyOn(PackageGeneratorView::, 'runCommand')
+        atom.commands.dispatch(packageGeneratorView, "core:confirm")
 
         expect(apmExecute).toHaveBeenCalled()
         expect(apmExecute.mostRecentCall.args[0]).toBe atom.packages.getApmPath()
@@ -122,13 +120,14 @@ describe 'Package Generator', ->
       [apmExecute] = []
 
       generatePackage = (insidePackagesDirectory, callback) ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn insidePackagesDirectory
-        expect(packageGeneratorView.hasParent()).toBeTruthy()
-        packageGeneratorView.miniEditor.setText(packagePath)
-        apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+        packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        spyOn(PackageGeneratorView::, 'isStoredInDotAtom').andReturn insidePackagesDirectory
+        expect(packageGeneratorView.parentElement).toBeTruthy()
+        editor.setText(packagePath)
+        apmExecute = spyOn(PackageGeneratorView::, 'runCommand').andCallFake (command, args, exit) ->
           process.nextTick -> exit()
-        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+        atom.commands.dispatch(packageGeneratorView, "core:confirm")
         waitsFor ->
           atom.open.callCount is 1
         runs callback
@@ -195,12 +194,13 @@ describe 'Package Generator', ->
 
       describe "when the theme is created outside of the packages directory", ->
         it "calls `apm init` and `apm link`", ->
-          packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-          expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
-          apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+          packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+          expect(packageGeneratorView.parentElement).toBeTruthy()
+          editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+          editor.setText(packagePath)
+          apmExecute = spyOn(PackageGeneratorView::, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
-          atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+          atom.commands.dispatch(packageGeneratorView, "core:confirm")
 
           waitsFor ->
             atom.open.callCount is 1
@@ -214,13 +214,14 @@ describe 'Package Generator', ->
 
       describe "when the theme is created inside of the packages directory", ->
         it "calls `apm init`", ->
-          packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-          spyOn(packageGeneratorView, 'isStoredInDotAtom').andReturn true
-          expect(packageGeneratorView.hasParent()).toBeTruthy()
-          packageGeneratorView.miniEditor.setText(packagePath)
-          apmExecute = spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+          packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+          editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+          spyOn(PackageGeneratorView::, 'isStoredInDotAtom').andReturn true
+          expect(packageGeneratorView.parentElement).toBeTruthy()
+          editor.setText(packagePath)
+          apmExecute = spyOn(PackageGeneratorView::, 'runCommand').andCallFake (command, args, exit) ->
             process.nextTick -> exit()
-          atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+          atom.commands.dispatch(packageGeneratorView, "core:confirm")
 
           waitsFor ->
             atom.open.callCount is 1
@@ -240,14 +241,14 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-
-        expect(packageGeneratorView.hasParent()).toBeTruthy()
-        expect(packageGeneratorView.error).not.toBeVisible()
-        packageGeneratorView.miniEditor.setText(packagePath)
-        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
-        expect(packageGeneratorView.hasParent()).toBeTruthy()
-        expect(packageGeneratorView.error).toBeVisible()
+        packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        expect(packageGeneratorView.parentElement).toBeTruthy()
+        expect(packageGeneratorView.querySelector('.error').offsetHeight).toBe(0)
+        editor.setText(packagePath)
+        atom.commands.dispatch(packageGeneratorView, "core:confirm")
+        expect(packageGeneratorView.parentElement).toBeTruthy()
+        expect(packageGeneratorView.querySelector('.error').offsetHeight).not.toBe(0)
 
     it "opens the package", ->
       atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
@@ -256,12 +257,13 @@ describe 'Package Generator', ->
         activationPromise
 
       runs ->
-        packageGeneratorView = $(getWorkspaceView()).find(".package-generator").view()
-        packageGeneratorView.miniEditor.setText(packagePath)
-        spyOn(packageGeneratorView, 'runCommand').andCallFake (command, args, exit) ->
+        packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+        editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        editor.setText(packagePath)
+        spyOn(PackageGeneratorView::, 'runCommand').andCallFake (command, args, exit) ->
           process.nextTick -> exit()
         spyOn(atom.packages, 'loadPackage')
-        atom.commands.dispatch(packageGeneratorView.element, "core:confirm")
+        atom.commands.dispatch(packageGeneratorView, "core:confirm")
 
       waitsFor ->
         atom.open.callCount is 1
