@@ -11,7 +11,7 @@
     ]
   },
   "dependencies": {
-    "fs-plus": "^2.0.0",
+    "fs-plus": "^3.0.0",
     "temp": "^0.8.1",
     "underscore-plus": "^1.0.0"
   },
