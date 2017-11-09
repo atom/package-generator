@@ -4,65 +4,59 @@ const temp = require('temp')
 const _ = require('underscore-plus')
 const PackageGeneratorView = require('../lib/package-generator-view')
 
+const {it, fit, ffit, afterEach, beforeEach} = require('./async-spec-helpers') // eslint-disable-line no-unused-vars
+
 describe('Package Generator', () => {
   let activationPromise = null
 
   const getWorkspaceView = () => atom.views.getView(atom.workspace)
   const getEditorView = () => atom.views.getView(atom.workspace.getActiveTextEditor())
 
-  beforeEach(() => {
-    waitsForPromise(() => atom.workspace.open('sample.js'))
+  beforeEach(async () => {
+    await atom.workspace.open('sample.js')
 
-    runs(() => { activationPromise = atom.packages.activatePackage('package-generator') })
+    activationPromise = atom.packages.activatePackage('package-generator')
   })
 
   describe('when package-generator:generate-package is triggered', () => {
-    it('displays a miniEditor with the correct text and selection', () => {
+    it('displays a miniEditor with the correct text and selection', async () => {
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-      waitsForPromise(() => activationPromise)
+      await activationPromise
 
-      runs(() => {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
-        expect(editor.getSelectedText()).toEqual('my-package')
-        const base = atom.config.get('core.projectHome')
-        expect(editor.getText()).toEqual(path.join(base, 'my-package'))
-      })
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      expect(editor.getSelectedText()).toEqual('my-package')
+      const base = atom.config.get('core.projectHome')
+      expect(editor.getText()).toEqual(path.join(base, 'my-package'))
     })
   })
 
   describe('when package-generator:generate-syntax-theme is triggered', () => {
-    it('displays a miniEditor with correct text and selection', () => {
+    it('displays a miniEditor with correct text and selection', async () => {
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-syntax-theme')
 
-      waitsForPromise(() => activationPromise)
+      await activationPromise
 
-      return runs(function () {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
-        expect(editor.getSelectedText()).toEqual('my-theme')
-        const base = atom.config.get('core.projectHome')
-        expect(editor.getText()).toEqual(path.join(base, 'my-theme-syntax'))
-      })
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      expect(editor.getSelectedText()).toEqual('my-theme')
+      const base = atom.config.get('core.projectHome')
+      expect(editor.getText()).toEqual(path.join(base, 'my-theme-syntax'))
     })
   })
 
   describe('when core:cancel is triggered', () => {
-    it('detaches from the DOM and focuses the the previously focused element', () => {
+    it('detaches from the DOM and focuses the the previously focused element', async () => {
       jasmine.attachToDOM(getWorkspaceView())
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-      waitsForPromise(() => activationPromise)
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      expect(document.activeElement.closest('atom-text-editor')).toBe(packageGeneratorView.querySelector('atom-text-editor'))
 
-      return runs(function () {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        expect(document.activeElement.closest('atom-text-editor')).toBe(packageGeneratorView.querySelector('atom-text-editor'))
-
-        atom.commands.dispatch(packageGeneratorView, 'core:cancel')
-        expect(atom.workspace.getModalPanels()[0].isVisible()).toBe(false)
-        expect(document.activeElement.closest('atom-text-editor')).toBe(getEditorView())
-      })
+      atom.commands.dispatch(packageGeneratorView, 'core:cancel')
+      expect(atom.workspace.getModalPanels()[0].isVisible()).toBe(false)
+      expect(document.activeElement.closest('atom-text-editor')).toBe(getEditorView())
     })
   })
 
@@ -85,43 +79,39 @@ describe('Package Generator', () => {
 
     afterEach(() => fs.removeSync(packageRoot))
 
-    it("forces the package's name to be lowercase with dashes", () => {
+    it("forces the package's name to be lowercase with dashes", async () => {
       packageName = 'CamelCaseIsForTheBirds'
       packagePath = path.join(path.dirname(packagePath), packageName)
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-      waitsForPromise(() => activationPromise)
+      await activationPromise
 
-      return runs(function () {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
-        editor.setText(packagePath)
-        const apmExecute = spyOn(PackageGeneratorView.prototype, 'runCommand')
-        atom.commands.dispatch(packageGeneratorView, 'core:confirm')
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      editor.setText(packagePath)
+      const apmExecute = spyOn(PackageGeneratorView.prototype, 'runCommand')
+      atom.commands.dispatch(packageGeneratorView, 'core:confirm')
 
-        expect(apmExecute).toHaveBeenCalled()
-        expect(apmExecute.mostRecentCall.args[0]).toBe(atom.packages.getApmPath())
-        expect(apmExecute.mostRecentCall.args[1]).toEqual(packageInitCommandFor(`${path.join(path.dirname(packagePath), 'camel-case-is-for-the-birds')}`))
-      })
+      expect(apmExecute).toHaveBeenCalled()
+      expect(apmExecute.mostRecentCall.args[0]).toBe(atom.packages.getApmPath())
+      expect(apmExecute.mostRecentCall.args[1]).toEqual(packageInitCommandFor(`${path.join(path.dirname(packagePath), 'camel-case-is-for-the-birds')}`))
     })
 
-    it("normalizes the package's path", () => {
+    it("normalizes the package's path", async () => {
       packagePath = path.join('~', 'the-package')
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-      waitsForPromise(() => activationPromise)
+      await activationPromise
 
-      return runs(function () {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
-        editor.setText(packagePath)
-        const apmExecute = spyOn(PackageGeneratorView.prototype, 'runCommand')
-        atom.commands.dispatch(packageGeneratorView, 'core:confirm')
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      editor.setText(packagePath)
+      const apmExecute = spyOn(PackageGeneratorView.prototype, 'runCommand')
+      atom.commands.dispatch(packageGeneratorView, 'core:confirm')
 
-        expect(apmExecute).toHaveBeenCalled()
-        expect(apmExecute.mostRecentCall.args[0]).toBe(atom.packages.getApmPath())
-        expect(apmExecute.mostRecentCall.args[1]).toEqual(packageInitCommandFor(`${fs.normalize(packagePath)}`))
-      })
+      expect(apmExecute).toHaveBeenCalled()
+      expect(apmExecute.mostRecentCall.args[0]).toBe(atom.packages.getApmPath())
+      expect(apmExecute.mostRecentCall.args[1]).toEqual(packageInitCommandFor(`${fs.normalize(packagePath)}`))
     })
 
     describe('when creating a package', () => {
@@ -142,10 +132,10 @@ describe('Package Generator', () => {
       const generateOutside = _.partial(generatePackage, false)
       const generateInside = _.partial(generatePackage, true)
 
-      beforeEach(() => {
+      beforeEach(async () => {
         atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-        waitsForPromise(() => activationPromise)
+        await activationPromise
       })
 
       describe('when the package is created outside of the packages directory', () => {
@@ -207,10 +197,10 @@ describe('Package Generator', () => {
     })
 
     describe('when creating a theme', () => {
-      beforeEach(() => {
+      beforeEach(async () => {
         atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-syntax-theme')
 
-        waitsForPromise(() => activationPromise)
+        await activationPromise
       })
 
       describe('when the theme is created outside of the packages directory', () => {
@@ -235,7 +225,7 @@ describe('Package Generator', () => {
       })
 
       describe('when the theme is created inside of the packages directory', () => {
-        it('calls `apm init`', function () {
+        it('calls `apm init`', () => {
           const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
           const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
           spyOn(PackageGeneratorView.prototype, 'isStoredInDotAtom').andReturn(true)
@@ -256,38 +246,34 @@ describe('Package Generator', () => {
       })
     })
 
-    it('displays an error when the package path already exists', () => {
+    it('displays an error when the package path already exists', async () => {
       jasmine.attachToDOM(getWorkspaceView())
       fs.makeTreeSync(packagePath)
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-      waitsForPromise(() => activationPromise)
+      await activationPromise
 
-      return runs(function () {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
-        expect(packageGeneratorView.parentElement).toBeTruthy()
-        expect(packageGeneratorView.querySelector('.error').offsetHeight).toBe(0)
-        editor.setText(packagePath)
-        atom.commands.dispatch(packageGeneratorView, 'core:confirm')
-        expect(packageGeneratorView.parentElement).toBeTruthy()
-        expect(packageGeneratorView.querySelector('.error').offsetHeight).not.toBe(0)
-      })
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      expect(packageGeneratorView.parentElement).toBeTruthy()
+      expect(packageGeneratorView.querySelector('.error').offsetHeight).toBe(0)
+      editor.setText(packagePath)
+      atom.commands.dispatch(packageGeneratorView, 'core:confirm')
+      expect(packageGeneratorView.parentElement).toBeTruthy()
+      expect(packageGeneratorView.querySelector('.error').offsetHeight).not.toBe(0)
     })
 
-    it('opens the package', () => {
+    it('opens the package', async () => {
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
 
-      waitsForPromise(() => activationPromise)
+      await activationPromise
 
-      runs(function () {
-        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
-        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
-        editor.setText(packagePath)
-        spyOn(PackageGeneratorView.prototype, 'runCommand').andCallFake((command, args, exit) => process.nextTick(() => exit()))
-        spyOn(atom.packages, 'loadPackage')
-        atom.commands.dispatch(packageGeneratorView, 'core:confirm')
-      })
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      editor.setText(packagePath)
+      spyOn(PackageGeneratorView.prototype, 'runCommand').andCallFake((command, args, exit) => process.nextTick(() => exit()))
+      spyOn(atom.packages, 'loadPackage')
+      atom.commands.dispatch(packageGeneratorView, 'core:confirm')
 
       waitsFor(() => atom.open.callCount === 1)
 
