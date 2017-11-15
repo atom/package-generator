@@ -20,7 +20,7 @@
     "atom": "*"
   },
   "devDependencies": {
-    "coffeelint": "^1.9.7"
+    "standard": "^10.0.3"
   },
   "configSchema": {
     "createInDevMode": {
@@ -37,5 +37,16 @@
       ],
       "description": "The syntax to generate packages with."
     }
+  },
+  "standard": {
+    "env": {
+      "atomtest": true,
+      "browser": true,
+      "jasmine": true,
+      "node": true
+    },
+    "globals": [
+      "atom"
+    ]
   }
 }
