@@ -29,6 +29,27 @@ describe('Package Generator', () => {
       const base = atom.config.get('core.projectHome')
       expect(editor.getText()).toEqual(path.join(base, 'my-package'))
     })
+
+    describe('when ATOM_REPOS_HOME is set', () => {
+      beforeEach(() => {
+        process.env.ATOM_REPOS_HOME = '/atom/repos/home'
+      })
+
+      afterEach(() => {
+        delete process.env.ATOM_REPOS_HOME
+      })
+
+      it('overrides the default path', async () => {
+        atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-package')
+        await activationPromise
+
+        const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+        const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+        expect(editor.getSelectedText()).toEqual('my-package')
+        const base = '/atom/repos/home'
+        expect(editor.getText()).toEqual(path.join(base, 'my-package'))
+      })
+    })
   })
 
   describe('when package-generator:generate-syntax-theme is triggered', () => {
