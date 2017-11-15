@@ -31,6 +31,26 @@ describe 'Package Generator', ->
         base = atom.config.get 'core.projectHome'
         expect(editor.getText()).toEqual path.join(base, 'my-package')
 
+    describe "when ATOM_REPOS_HOME is set", ->
+      beforeEach ->
+        process.env.ATOM_REPOS_HOME = "/atom/repos/home"
+
+      afterEach ->
+        delete process.env.ATOM_REPOS_HOME
+
+      it "overrides the default path", ->
+        atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-package")
+
+        waitsForPromise ->
+          activationPromise
+
+        runs ->
+          packageGeneratorView = getWorkspaceView().querySelector(".package-generator")
+          editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+          expect(editor.getSelectedText()).toEqual 'my-package'
+          base = "/atom/repos/home"
+          expect(editor.getText()).toEqual path.join(base, 'my-package')
+
   describe "when package-generator:generate-syntax-theme is triggered", ->
     it "displays a miniEditor with correct text and selection", ->
       atom.commands.dispatch(getWorkspaceView(), "package-generator:generate-syntax-theme")
