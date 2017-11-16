@@ -2,11 +2,12 @@
   "name": "package-generator",
   "version": "1.2.0",
   "main": "./lib/main",
-  "description": "Generates and opens a new sample package or syntax theme.",
+  "description": "Generates and opens a new sample package, language, or syntax theme.",
   "license": "MIT",
   "activationCommands": {
     "atom-workspace": [
       "package-generator:generate-package",
+      "package-generator:generate-language-package",
       "package-generator:generate-syntax-theme"
     ]
   },
