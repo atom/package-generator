@@ -9,7 +9,6 @@ describe('Package Generator', () => {
   let packageGeneratorView = null
 
   const getWorkspaceView = () => atom.views.getView(atom.workspace)
-  const getEditorView = () => atom.views.getView(atom.workspace.getActiveTextEditor())
 
   const typeToPackageNameMap = new Map([
     ['package', 'my-package'],
@@ -69,7 +68,7 @@ describe('Package Generator', () => {
 
       packageGeneratorView.close()
       expect(atom.workspace.getModalPanels()[0].isVisible()).toBe(false)
-      expect(document.activeElement.closest('atom-text-editor')).toBe(getEditorView())
+      expect(document.activeElement.closest('atom-text-editor')).toBe(atom.views.getView(atom.workspace.getActiveTextEditor()))
     })
   })
 
