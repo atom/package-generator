@@ -52,6 +52,20 @@ describe('Package Generator', () => {
     })
   })
 
+  describe('when package-generator:generate-language-package is triggered', () => {
+    it('displays a miniEditor with the correct text and selection', async () => {
+      atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-language-package')
+
+      await activationPromise
+
+      const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+      const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+      expect(editor.getSelectedText()).toEqual('my-language')
+      const base = atom.config.get('core.projectHome')
+      expect(editor.getText()).toEqual(path.join(base, 'language-my-language'))
+    })
+  })
+
   describe('when package-generator:generate-syntax-theme is triggered', () => {
     it('displays a miniEditor with correct text and selection', async () => {
       atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-syntax-theme')
@@ -204,6 +218,53 @@ describe('Package Generator', () => {
           await generatePackage(true)
           expect(apmExecute.argsForCall[0][0]).toBe(atom.packages.getApmPath())
           expect(apmExecute.argsForCall[0][1]).toEqual(packageInitCommandFor(`${packagePath}`, 'javascript'))
+        })
+      })
+    })
+
+    describe('when creating a language', () => {
+      beforeEach(async () => {
+        jasmine.useRealClock()
+        atom.commands.dispatch(getWorkspaceView(), 'package-generator:generate-language-package')
+
+        await activationPromise
+      })
+
+      describe('when the language is created outside of the packages directory', () => {
+        it('calls `apm init` and `apm link`', async () => {
+          const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+          expect(packageGeneratorView.parentElement).toBeTruthy()
+          const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+          editor.setText(packagePath)
+          const apmExecute = spyOn(PackageGeneratorView.prototype, 'runCommand').andCallFake((command, args, exit) => process.nextTick(() => exit()))
+          atom.commands.dispatch(packageGeneratorView, 'core:confirm')
+
+          await conditionPromise(() => atom.open.callCount === 1)
+
+          expect(apmExecute.argsForCall[0][0]).toBe(atom.packages.getApmPath())
+          expect(apmExecute.argsForCall[0][1]).toEqual(['init', '--language', `${packagePath}`, '--syntax', 'javascript'])
+          expect(apmExecute.argsForCall[1][0]).toBe(atom.packages.getApmPath())
+          expect(apmExecute.argsForCall[1][1]).toEqual(['link', `${packagePath}`])
+          expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe(packagePath)
+        })
+      })
+
+      describe('when the language is created inside of the packages directory', () => {
+        it('calls `apm init`', async () => {
+          const packageGeneratorView = getWorkspaceView().querySelector('.package-generator')
+          const editor = packageGeneratorView.querySelector('atom-text-editor').getModel()
+          spyOn(PackageGeneratorView.prototype, 'isStoredInDotAtom').andReturn(true)
+          expect(packageGeneratorView.parentElement).toBeTruthy()
+          editor.setText(packagePath)
+          const apmExecute = spyOn(PackageGeneratorView.prototype, 'runCommand').andCallFake((command, args, exit) => process.nextTick(() => exit()))
+          atom.commands.dispatch(packageGeneratorView, 'core:confirm')
+
+          await conditionPromise(() => atom.open.callCount === 1)
+
+          expect(apmExecute.argsForCall[0][0]).toBe(atom.packages.getApmPath())
+          expect(apmExecute.argsForCall[0][1]).toEqual(['init', '--language', `${packagePath}`, '--syntax', 'javascript'])
+          expect(atom.open.argsForCall[0][0].pathsToOpen[0]).toBe(packagePath)
+          expect(apmExecute.argsForCall[1]).toBeUndefined()
         })
       })
     })
